@@ -15,19 +15,20 @@ char lex_buffer[BUFFER_LEN];
 
 %}
 
+
 %%
 
-\n              { return PARSER_EOF; }
+\n              { printf("\\n found\n"); return PARSER_EOF; }
 
-0|-?[1-9][0-9]* { return MATH_INT; }
+0|-?[1-9][0-9]*  { return MATH_INT; }
 
 -?[0-9]*\.[0-9]+ { return MATH_DOUBLE; }
 
 [a-zA-Z1-9_]+    { return MATH_VARIABLE; }
 
-[ ]              { /* Whitespace should be ignored */ }
+[ \t]+              { /* Whitespace/tab should be ignored */ }
 
-.               { printf("input '%s' has failed to match any regular expressions",
+.               { printf("invalid input '%s' has failed to match any patterns\n",
                   yytext); }
 
 %%
@@ -38,6 +39,7 @@ main(int argc, char **argv){
 
     while (1){
 
+	printf("Input -> ");
 	fgets(lex_buffer, sizeof(lex_buffer), stdin);
 
 	if (lex_buffer[0] == '\n'){
@@ -50,9 +52,9 @@ main(int argc, char **argv){
 
 	token_code = yylex();
 	while(token_code != PARSER_EOF){
-	    printf("token code = %s, token = %s\n",
+	    printf("token code = '%s', token = '%s', length = '%lu'\n",
 		   Mexpr_get_string_token(token_code),
-		   yytext);
+		   yytext, yyleng);
 	    token_code = yylex();
 	}
     }

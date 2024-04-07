@@ -1,48 +1,17 @@
 
 %{
-/* Define all supportive data structures definitions */
 
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-#include "MexprEnums.h"
+#include "ExportedParser.h"
 
-/* Stack the parsed results */
-#define MAX_STACK_INDEX 512
-typedef struct lex_data {
-    int token_code;
-    int token_len;
-    char *token_val;
-} lex_data;
- lex_data ldummy = { INVALID, 0, NULL };
-
-typedef struct lex_stack {
-    int stack_pointer;
-    lex_data main_data[MAX_STACK_INDEX];
-} lex_stack;
-
-extern lex_stack lstack;
+lex_data ldummy = { INVALID, 0, NULL };
 lex_stack lstack = { INVALID, { 0, 0, NULL} };
-
-/* Parse inputs */
-#define BUFFER_LEN 512
-extern char lex_buffer[BUFFER_LEN];
 char lex_buffer[BUFFER_LEN];
-
-extern char *next_parse_pos;
 char *next_parse_pos = lex_buffer;
 
-/* Manage lex_stack */
-extern int cyylex();
-extern void yyrewind(int n);
-extern void parser_stack_reset(void);
-extern void lex_set_scan_buffer(const char *buffer);
-#define STRING_IS_NEWLINE(s) (s != NULL && (strncmp(s, "\n", strlen("\n")) == 0))
-
-/* CHECKPOINT */
-int checkpoint_index;
 #define CHECKPOINT() { checkpoint_index = lstack.stack_pointer; }
 #define RESTORE_CHECKPOINT() { yyrewind(lstack.stack_pointer - checkpoint_index); }
+
+int checkpoint_index;
 
 /* Stack operations */
 static void

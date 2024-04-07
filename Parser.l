@@ -37,8 +37,12 @@ extern int cyylex();
 extern void yyrewind(int n);
 extern void parser_stack_reset(void);
 extern void lex_set_scan_buffer(const char *buffer);
-
 #define STRING_IS_NEWLINE(s) (s != NULL && (strncmp(s, "\n", strlen("\n")) == 0))
+
+/* CHECKPOINT */
+int checkpoint_index;
+#define CHECKPOINT() { checkpoint_index = lstack.stack_pointer; }
+#define RESTORE_CHECKPOINT() { yyrewind(lstack.stack_pointer - checkpoint_index); }
 
 /* Stack operations */
 static void
@@ -82,8 +86,8 @@ lex_pop(){
 
     /* debug print */
     printf("Popped '%s' (code = '%s') at index=%d\n",
-               ldp->token_val, Mexpr_get_string_token(ldp->token_code),
-	       lstack.stack_pointer);
+           ldp->token_val, Mexpr_get_string_token(ldp->token_code),
+	   lstack.stack_pointer);
 
     lstack.stack_pointer--;
 
@@ -152,7 +156,7 @@ lex_set_scan_buffer(const char *buffer){
 
 debug            { /* Only for the development */ debug_print(); }
 
-b[1-9]           { /* Only for the development */ yyrewind(yytext[1] - '0'); }
+r[1-9]           { /* Only for the development */ yyrewind(yytext[1] - '0'); }
 
 D                { /* Only for the development */ parser_stack_reset(); }
 

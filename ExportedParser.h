@@ -22,7 +22,7 @@ typedef struct lex_stack {
 
 extern lex_stack lstack;
 
-#define STACK_TOPMOST_ELEM (&lstack.main_data[lstack.stack_pointer - 1])
+#define STACK_TOPMOST_ELEM (lstack.main_data[lstack.stack_pointer - 1])
 
 /* Parse inputs */
 #define BUFFER_LEN 512
@@ -34,6 +34,7 @@ extern int cyylex();
 extern void yyrewind(int n);
 extern void parser_stack_reset(void);
 extern void lex_set_scan_buffer(const char *buffer);
-#define STRING_IS_NEWLINE(s) (s != NULL && (strncmp(s, "\n", strlen("\n")) == 0))
+#define STRING_IS_NEWLINE(s) \
+    (s != NULL && (strncmp(s, "\n", strlen("\n")) == 0))
 
 #endif

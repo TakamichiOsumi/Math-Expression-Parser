@@ -4,7 +4,11 @@
 #include "ExportedParser.h"
 #include "MexprEnums.h"
 
-/* Expects that user inputs pow(x, 2) + pow(y, 2) = <CONSTANT> */
+/*
+ * Return true, if user inputs pow(x, 2) + pow(y, 2) = <CONSTANT>.
+ *
+ * Otherwise, return false.
+ */
 static bool
 circle_eqn(){
     int token_code;
@@ -27,8 +31,7 @@ circle_eqn(){
 	return false;
     }
 
-    if (strcmp(lstack.main_data[lstack.stack_pointer - 1].token_val,
-	       "x") != 0){
+    if (strcmp(STACK_TOPMOST_ELEM.token_val, "x") != 0){
 	yyrewind(3);
 	return false;
     }
@@ -45,13 +48,12 @@ circle_eqn(){
 	return false;
     }
 
-    if (strcmp(lstack.main_data[lstack.stack_pointer - 1].token_val,
-	       "2") != 0){
+    if (strcmp(STACK_TOPMOST_ELEM.token_val, "2") != 0){
 	yyrewind(5);
 	return false;
     }
 
-    /* pow(x, 2) */
+    /* pow(x, 2) will by done by this call */
     token_code = cyylex();
     if (token_code != MATH_BRACKET_END){
 	yyrewind(6);
@@ -83,8 +85,7 @@ circle_eqn(){
 	return false;
     }
 
-    if (strcmp(lstack.main_data[lstack.stack_pointer - 1].token_val,
-	       "y") != 0){
+    if (strcmp(STACK_TOPMOST_ELEM.token_val, "y") != 0){
 	yyrewind(10);
 	return false;
     }
@@ -101,8 +102,7 @@ circle_eqn(){
 	return false;
     }
 
-    if (strcmp(lstack.main_data[lstack.stack_pointer - 1].token_val,
-	       "2") != 0){
+    if (strcmp(STACK_TOPMOST_ELEM.token_val, "2") != 0){
 	yyrewind(12);
 	return false;
     }

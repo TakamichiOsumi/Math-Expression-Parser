@@ -28,7 +28,7 @@ typedef enum {
     MATH_COS, /* cos() */
     MATH_POW, /* pow() */
 
-    /* */
+    /* Ignored character */
     WHITE_SPACE,
 
     DTYPE_END, /* The end indication of all enums */

@@ -123,6 +123,32 @@ lex_set_scan_buffer(const char *buffer){
 
 \n               { return PARSER_EOF; }
 
+"min"            { return MATH_MIN;   }
+
+"max"            { return MATH_MAX;   }
+
+"sin"            { return MATH_SIN;   }
+
+"cos"            { return MATH_COS;   }
+
+"pow"            { return MATH_POW;   }
+
+"("              { return MATH_BRACKET_START; }
+
+")"              { return MATH_BRACKET_END;   }
+
+"+"              { return MATH_PLUS;   }
+
+"-"              { return MATH_MINUS;  }
+
+"/"              { return MATH_DIVIDE; }
+
+"%"              { return MATH_REMAINDER; }
+
+","              { return MATH_COMMA;     }
+
+"="              { return MATH_EQ;        }
+
 debug            { /* Only for the development */ debug_print(); }
 
 r[1-9]           { /* Only for the development */ yyrewind(yytext[1] - '0'); }
@@ -206,6 +232,8 @@ yyrewind(int n){
     /* yy_scan_string(next_parse_pos); */
 }
 
+extern void parse_equations();
+
 int
 main(int argc, char **argv){
     int token_code;
@@ -218,16 +246,11 @@ main(int argc, char **argv){
 	fgets(lex_buffer, sizeof(lex_buffer), stdin);
 
 	/* Tell the lex which buffer to parse */
-	yy_scan_string(lex_buffer);
+	lex_set_scan_buffer(lex_buffer);
 
-	/* Calling yylex() sets up 'token_code', 'yytext' and 'yyleng' */
-	token_code = cyylex();
+	parse_equations();
 
-	while(token_code != PARSER_EOF){
-	    /* printf("token code = '%s', token = '%s', length = '%lu'\n",
-	       Mexpr_get_string_token(token_code), yytext, yyleng); */
-	    token_code = cyylex();
-	}
+	parser_stack_reset();
     }
 
     return 0;

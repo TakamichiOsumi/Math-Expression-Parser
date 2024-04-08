@@ -20,6 +20,10 @@ typedef struct lex_stack {
     lex_data main_data[MAX_STACK_INDEX];
 } lex_stack;
 
+extern lex_stack lstack;
+
+#define STACK_TOPMOST_ELEM (&lstack.main_data[lstack.stack_pointer - 1])
+
 /* Parse inputs */
 #define BUFFER_LEN 512
 extern char lex_buffer[BUFFER_LEN];

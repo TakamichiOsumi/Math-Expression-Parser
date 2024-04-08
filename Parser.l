@@ -16,7 +16,6 @@ lex_set_scan_buffer(const char *buffer){
 /* Stack operations */
 static void
 lex_push(lex_data data){
-    /* Safeguards */
     if (lstack.stack_pointer < 0){
 	printf("The stack pointer is smaller than zero = %d\n",
 	       lstack.stack_pointer);
@@ -96,7 +95,6 @@ parser_stack_reset(void){
     int i, removed_string_len = 0;
     lex_data *ldata;
 
-    /* Already reset */
     if ((lstack.stack_pointer < 0) ||
 	(lstack.stack_pointer > MAX_STACK_INDEX - 1)){
 	printf("the stack pointer = %d is invalid\n",
@@ -241,9 +239,8 @@ int
 main(int argc, char **argv){
     int token_code;
 
-    memset(lex_buffer, '\0', BUFFER_LEN);
-
     while (1){
+	memset(lex_buffer, '\0', BUFFER_LEN);
 
 	printf("USER INPUT => ");
 
@@ -252,12 +249,11 @@ main(int argc, char **argv){
 	lex_set_scan_buffer(lex_buffer);
 
 	/* Part1 : Evaluate input string as circle equation */
-	/* parse_equations(); */
+	// parse_equations();
 
 	/* Part2 : Evaluate input string as select command */
 	start_sql_parse();
 	parser_stack_reset();
-	memset(lex_buffer, '\0', BUFFER_LEN);
 
 	/* Part3 : Leave this piece of codes for debug */
 	/*

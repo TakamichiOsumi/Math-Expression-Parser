@@ -32,8 +32,8 @@ typedef enum {
     SELECT, /* SELECT */
     FROM, /* FROM */
 
-    /* Ignored character */
     WHITE_SPACE,
+    TAB,
 
     PARSER_EOF,
 } mexpr_dtype;

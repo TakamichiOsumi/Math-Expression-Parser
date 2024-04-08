@@ -43,6 +43,8 @@ Mexpr_get_string_token(int token_code){
 	    return "FROM";
 	case WHITE_SPACE:
 	    return "SPACE";
+	case TAB:
+	    return "TAB";
 	case PARSER_EOF:
 	    return "PARSER_EOF";
 	default:

@@ -7,7 +7,11 @@ lex_data ldummy = { INVALID, 0, NULL };
 lex_stack lstack = { INVALID, { 0, 0, NULL} };
 char lex_buffer[BUFFER_LEN];
 char *next_parse_pos = lex_buffer;
-int checkpoint_index = 0;
+
+extern void
+lex_set_scan_buffer(const char *buffer){
+    yy_scan_string(buffer);
+}
 
 /* Stack operations */
 static void
@@ -48,26 +52,32 @@ lex_pop(){
     /* debug print */
     printf("Popped '%s' whose code is '%s' at index=%d\n",
            ldp->token_val, Mexpr_get_string_token(ldp->token_code),
-	   lstack.stack_pointer);
+	   lstack.stack_pointer - 1);
 
     lstack.stack_pointer--;
 
     return lstack.main_data[lstack.stack_pointer];
 }
 
-/*
 static void
-process_white_space(int n){
+process_white_space_or_tab(mexpr_dtype type, int n){
     lex_data ldata;
 
     next_parse_pos += n;
-    ldata.token_code = WHITE_SPACE;
+    ldata.token_code = type;
     ldata.token_len = n;
-    ldata.token_val = NULL;
+
+    /* Create the copy of the whitespaces/tabs */
+    ldata.token_val = (char *) malloc(yyleng + 1);
+    if (ldata.token_val == NULL){
+	perror("malloc");
+	exit(-1);
+    }
+    memset(ldata.token_val, '\0', yyleng + 1);
+    strncpy(ldata.token_val, yytext, yyleng + 1);
 
     lex_push(ldata);
 }
-*/
 
 /* Make use of this function to dump any debug information */
 static void
@@ -83,30 +93,32 @@ debug_print(void){
 
 extern void
 parser_stack_reset(void){
-    int i;
+    int i, removed_string_len = 0;
     lex_data *ldata;
 
+    /* Already reset */
+    if ((lstack.stack_pointer < 0) ||
+	(lstack.stack_pointer > MAX_STACK_INDEX - 1)){
+	printf("the stack pointer = %d is invalid\n",
+	       lstack.stack_pointer);
+	assert(0);
+    }
+
     for (i = 0; i < lstack.stack_pointer; i++){
+	printf("Cleaning stack level = %d\n", i);
 	ldata = &lstack.main_data[i];
 	ldata->token_code = INVALID;
+	removed_string_len += ldata->token_len;
 	ldata->token_len = 0;
-	if (ldata->token_val){
+	if (ldata->token_val != NULL){
 	    free(ldata->token_val);
 	    ldata->token_val = NULL;
 	}
     }
+
     lstack.stack_pointer = 0;
-
-    /*
-     * If the buffer is not reset by fgets(), then reset the next parse position
-     * to the beginning of the 'lex_buffer'.
-     */
-    /* next_parse_pos = lex_buffer; */
-}
-
-extern void
-lex_set_scan_buffer(const char *buffer){
-    yy_scan_string(buffer);
+    next_parse_pos -= removed_string_len;
+    lex_set_scan_buffer(next_parse_pos);
 }
 
 %}
@@ -145,21 +157,15 @@ lex_set_scan_buffer(const char *buffer){
 
 "="              { return EQ;        }
 
-debug            { debug_print(); }
+0|-?[1-9][0-9]*  { return INT;       }
 
-r[1-9]           { yyrewind(yytext[1] - '0'); }
+-?[0-9]*\.[0-9]+ { return DOUBLE;    }
 
-D                { parser_stack_reset(); }
+[a-zA-Z1-9_]+    { return VARIABLE;  }
 
-0|-?[1-9][0-9]*  { return INT; }
+[ ]+             { process_white_space_or_tab(WHITE_SPACE, yyleng); }
 
--?[0-9]*\.[0-9]+ { return DOUBLE; }
-
-[a-zA-Z1-9_]+    { return VARIABLE; }
-
-[ ]+             { /* Ignore whitespaces */ }
-
-[\t]+            { /* Ignore tabs */ }
+[\t]+            { process_white_space_or_tab(TAB, yyleng); }
 
 .                { printf("detected invalid input '%s'\n", yytext); }
 
@@ -167,20 +173,16 @@ D                { parser_stack_reset(); }
 
 int
 cyylex(){
-    int token_code = yylex();
+    int token_code;
     lex_data ldata;
+
+    token_code = yylex();
 
     ldata.token_code = token_code;
     ldata.token_len = yyleng;
     next_parse_pos += yyleng;
 
-    /*
-     * Avoid pushing the new line to the stack
-     * (and allocating memory for it).
-     */
-    if (token_code == PARSER_EOF)
-	return token_code;
-
+    /* Create the copy of the parsed text */
     ldata.token_val = (char *) malloc(yyleng + 1);
     if (ldata.token_val == NULL){
 	perror("malloc");
@@ -189,6 +191,7 @@ cyylex(){
     memset(ldata.token_val, '\0', yyleng + 1);
     strncpy(ldata.token_val, yytext, yyleng + 1);
 
+    /* Save the info into the stack */
     lex_push(ldata);
 
     return token_code;
@@ -197,6 +200,7 @@ cyylex(){
 /* 'n' : the number to pop up the stack */
 void
 yyrewind(int n){
+    int removed_token_len = 0;
     lex_data ldata;
 
     printf("Rewinding %d stack levels ...\n", n);
@@ -214,20 +218,24 @@ yyrewind(int n){
 	}
 
 	ldata = lex_pop();
+	removed_token_len += ldata.token_len;
 	n--;
 
 	ldata.token_code = 0;
 	ldata.token_len = 0;
     }
 
+    next_parse_pos -= removed_token_len;
+
     /*
-     * Notify the lexical parser of the moved starting position to parse,
-     * if the buffer is not reset by fgets().
+     * Notify the lexical parser of the moved starting position
+     * to parse.
      */
-    /* yy_scan_string(next_parse_pos); */
+    yy_scan_string(next_parse_pos);
 }
 
 extern void parse_equations();
+extern void start_sql_parse();
 
 int
 main(int argc, char **argv){
@@ -237,15 +245,27 @@ main(int argc, char **argv){
 
     while (1){
 
-	printf("Input : ");
+	printf("USER INPUT => ");
 
 	fgets(lex_buffer, sizeof(lex_buffer), stdin);
 
 	lex_set_scan_buffer(lex_buffer);
 
-	parse_equations();
+	/* Part1 : Evaluate input string as circle equation */
+	/* parse_equations(); */
 
+	/* Part2 : Evaluate input string as select command */
+	start_sql_parse();
 	parser_stack_reset();
+	memset(lex_buffer, '\0', BUFFER_LEN);
+
+	/* Part3 : Leave this piece of codes for debug */
+	/*
+	token_code = cyylex();
+	while(token_code != PARSER_EOF){
+	    token_code = cyylex();
+	}
+	*/
     }
 
     return 0;

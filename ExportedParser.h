@@ -39,10 +39,10 @@ extern void yyrewind(int n);
 extern void parser_stack_reset(void);
 extern void lex_set_scan_buffer(const char *buffer);
 
-extern int checkpoint_index;
-#define CHECKPOINT() \
-    checkpoint_index = lstack.stack_pointer;
-#define RESTORE_CHECKPOINT() \
-    yyrewind(lstack.stack_pointer - checkpoint_index);
+/* The caller must declare and pass one variable for below macros */
+#define CHECKPOINT(checkpoint_index) \
+    { checkpoint_index = lstack.stack_pointer; }
+#define RESTORE_CHECKPOINT(checkpoint_index) \
+    { yyrewind(lstack.stack_pointer - checkpoint_index); }
 
 #endif

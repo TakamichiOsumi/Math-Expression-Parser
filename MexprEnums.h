@@ -28,6 +28,10 @@ typedef enum {
     COS, /* cos() */
     POW, /* pow() */
 
+    /* SQL */
+    SELECT, /* SELECT */
+    FROM, /* FROM */
+
     /* Ignored character */
     WHITE_SPACE,
 

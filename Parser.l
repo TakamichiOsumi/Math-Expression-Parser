@@ -55,6 +55,7 @@ lex_pop(){
     return lstack.main_data[lstack.stack_pointer];
 }
 
+/*
 static void
 process_white_space(int n){
     lex_data ldata;
@@ -66,6 +67,7 @@ process_white_space(int n){
 
     lex_push(ldata);
 }
+*/
 
 /* Make use of this function to dump any debug information */
 static void
@@ -122,6 +124,10 @@ lex_set_scan_buffer(const char *buffer){
 "cos"            { return COS;   }
 
 "pow"            { return POW;   }
+
+"select"         { return SELECT; }
+
+"from"           { return FROM;   }
 
 "("              { return BRACKET_START; }
 
@@ -191,7 +197,6 @@ cyylex(){
 /* 'n' : the number to pop up the stack */
 void
 yyrewind(int n){
-    int removed_total_strlen = 0;
     lex_data ldata;
 
     printf("Rewinding %d stack levels ...\n", n);
@@ -209,17 +214,11 @@ yyrewind(int n){
 	}
 
 	ldata = lex_pop();
-	removed_total_strlen += ldata.token_len;
-	if (ldata.token_code == WHITE_SPACE){
-	    continue;
-	}else
-	    n--;
+	n--;
 
 	ldata.token_code = 0;
 	ldata.token_len = 0;
     }
-
-    next_parse_pos -= removed_total_strlen;
 
     /*
      * Notify the lexical parser of the moved starting position to parse,

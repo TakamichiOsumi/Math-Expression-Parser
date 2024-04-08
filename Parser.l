@@ -149,11 +149,11 @@ lex_set_scan_buffer(const char *buffer){
 
 "="              { return MATH_EQ;        }
 
-debug            { /* Only for the development */ debug_print(); }
+debug            { debug_print(); }
 
-r[1-9]           { /* Only for the development */ yyrewind(yytext[1] - '0'); }
+r[1-9]           { yyrewind(yytext[1] - '0'); }
 
-D                { /* Only for the development */ parser_stack_reset(); }
+D                { parser_stack_reset(); }
 
 0|-?[1-9][0-9]*  { return INT; }
 

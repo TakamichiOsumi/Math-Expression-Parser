@@ -1,6 +1,5 @@
 CC	= gcc
 CFLAGS	= -Wall -O0
-LIBS	= -lm
 
 all: parser MexprEnums.o executable
 

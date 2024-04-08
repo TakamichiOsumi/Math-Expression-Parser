@@ -3,10 +3,12 @@
 
 typedef enum {
     INVALID = 0,
-    INT, /* an integer */
+
+    /* Basic types */
+    INT,
     DOUBLE,
-    VARIABLE, /* alphanumeric one world */
-    WHITE_SPACE,
+    VARIABLE,
+
     /* Symbols */
     MATH_BRACKET_START,
     MATH_BRACKET_END,
@@ -25,6 +27,10 @@ typedef enum {
     MATH_SIN, /* sin() */
     MATH_COS, /* cos() */
     MATH_POW, /* pow() */
+
+    /* */
+    WHITE_SPACE,
+
     DTYPE_END, /* The end indication of all enums */
 } mexppr_dtype;
 

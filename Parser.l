@@ -7,11 +7,7 @@ lex_data ldummy = { INVALID, 0, NULL };
 lex_stack lstack = { INVALID, { 0, 0, NULL} };
 char lex_buffer[BUFFER_LEN];
 char *next_parse_pos = lex_buffer;
-
-#define CHECKPOINT() { checkpoint_index = lstack.stack_pointer; }
-#define RESTORE_CHECKPOINT() { yyrewind(lstack.stack_pointer - checkpoint_index); }
-
-int checkpoint_index;
+int checkpoint_index = 0;
 
 /* Stack operations */
 static void
@@ -46,7 +42,7 @@ lex_pop(){
 
     if (lstack.stack_pointer <= 0){
 	/* The below code will be replaced with assert(0); */
-	printf("The stack is empty. Failed to pop()\n");
+	printf("The stack is empty. Do not pop()\n");
 
 	return ldummy;
     }

@@ -13,115 +13,117 @@ static bool
 circle_eqn(){
     int token_code;
 
+    CHECKPOINT(); /* preparation for failure */
+
     token_code = cyylex();
     if (token_code != MATH_POW){
-	yyrewind(1);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
     if (token_code != MATH_BRACKET_START){
-	yyrewind(2);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
     if (token_code != VARIABLE){
-	yyrewind(3);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     if (strcmp(STACK_TOPMOST_ELEM.token_val, "x") != 0){
-	yyrewind(3);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
     if (token_code != MATH_COMMA){
-	yyrewind(4);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
     if (token_code != INT){
-	yyrewind(5);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     if (strcmp(STACK_TOPMOST_ELEM.token_val, "2") != 0){
-	yyrewind(5);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     /* pow(x, 2) will by done by this call */
     token_code = cyylex();
     if (token_code != MATH_BRACKET_END){
-	yyrewind(6);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     /* + */
     token_code = cyylex();
     if (token_code != MATH_PLUS){
-	yyrewind(7);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
     if (token_code != MATH_POW){
-	yyrewind(8);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
     if (token_code != MATH_BRACKET_START){
-	yyrewind(9);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
     if (token_code != VARIABLE){
-	yyrewind(10);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     if (strcmp(STACK_TOPMOST_ELEM.token_val, "y") != 0){
-	yyrewind(10);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
     if (token_code != MATH_COMMA){
-	yyrewind(11);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
     if (token_code != INT){
-	yyrewind(12);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     if (strcmp(STACK_TOPMOST_ELEM.token_val, "2") != 0){
-	yyrewind(12);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
     if (token_code != MATH_BRACKET_END){
-	yyrewind(13);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
     if (token_code != MATH_EQ){
-	yyrewind(14);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
     if (token_code != INT && token_code != DOUBLE){
-	yyrewind(15);
+	RESTORE_CHECKPOINT();
 	return false;
     }
 

@@ -11,39 +11,37 @@ Mexpr_get_string_token(int token_code){
 	    return "DOUBLE";
 	case VARIABLE:
 	    return "VARIABLE";
-	case MATH_BRACKET_START:
-	    return "MATH_BRACKET_START";
-	case MATH_BRACKET_END:
-	    return "MATH_BRACKET_END";
-	case MATH_COMMA:
-	    return "MATH_COMMA";
-	case MATH_PLUS:
-	    return "MATH_PLUS";
-	case MATH_MINUS:
-	    return "MATH_MINUS";
-	case MATH_DIVIDE:
-	    return "MATH_DIVIDE";
-	case MATH_REMAINDER:
-	    return "MATH_REMAINDER";
-	case MATH_EQ:
+	case BRACKET_START:
+	    return "BRACKET_START";
+	case BRACKET_END:
+	    return "BRACKET_END";
+	case COMMA:
+	    return "COMMA";
+	case PLUS:
+	    return "PLUS";
+	case MINUS:
+	    return "MINUS";
+	case DIVIDE:
+	    return "DIVIDE";
+	case REMAINDER:
+	    return "REMAINDER";
+	case EQ:
 	    return "MATH_EQ";
-	case MATH_MIN:
-	    return "MATH_MIN";
-	case MATH_MAX:
-	    return "MATH_MAX";
-	case MATH_SIN:
-	    return "MATH_SIN";
-	case MATH_COS:
-	    return "MATH_COS";
-	case MATH_POW:
-	    return "MATH_POW";
+	case MIN:
+	    return "MIN";
+	case MAX:
+	    return "MAX";
+	case SIN:
+	    return "SIN";
+	case COS:
+	    return "COS";
+	case POW:
+	    return "POW";
 	case WHITE_SPACE:
-	    return "WHITE_SPACE";
-	case DTYPE_END:
-	    return "DTYPE_END";
+	    return "SPACE";
 	case PARSER_EOF:
 	    return "PARSER_EOF";
 	default:
-	    return "(NA)";
+	    return "NA";
     }
 }

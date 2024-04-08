@@ -12,25 +12,21 @@ int checkpoint_index = 0;
 /* Stack operations */
 static void
 lex_push(lex_data data){
+    /* Safeguards */
     if (lstack.stack_pointer < 0){
-	printf("The stack pointer is invalid = %d. Do nothing\n",
+	printf("The stack pointer is smaller than zero = %d\n",
 	       lstack.stack_pointer);
 	return;
-    }
-    if(lstack.stack_pointer > MAX_STACK_INDEX - 1){
-	printf("The stack is full. Push nothing.\n");
+    }else if (lstack.stack_pointer > MAX_STACK_INDEX - 1){
+	printf("The stack pointer is bigger than the upper limit = %d\n",
+	       lstack.stack_pointer);
 	return;
     }
 
-    /* Don't push the newline char */
-    if (STRING_IS_NEWLINE(data.token_val)){
-	return;
-    }else{
-	printf("Pushed '%s' (code = '%s') at index=%d\n",
-	       data.token_val,
-	       Mexpr_get_string_token(data.token_code),
-	       lstack.stack_pointer);
-    }
+    printf("Pushed '%s' whose code is '%s' at index=%d\n",
+	   data.token_val,
+	   Mexpr_get_string_token(data.token_code),
+	   lstack.stack_pointer);
 
     lstack.main_data[lstack.stack_pointer++] = data;
 }
@@ -50,7 +46,7 @@ lex_pop(){
     ldp = &lstack.main_data[lstack.stack_pointer - 1];
 
     /* debug print */
-    printf("Popped '%s' (code = '%s') at index=%d\n",
+    printf("Popped '%s' whose code is '%s' at index=%d\n",
            ldp->token_val, Mexpr_get_string_token(ldp->token_code),
 	   lstack.stack_pointer);
 
@@ -77,9 +73,7 @@ debug_print(void){
     int i;
     
     for (i = 0; i < lstack.stack_pointer; i++){
-	/* Make the output of '\n' tidy */
 	printf("[%03d] string '%s' is '%s' token\n", i,
-	       lstack.main_data[i].token_val == NULL ? " " /* or tab */:
 	       lstack.main_data[i].token_val,
 	       Mexpr_get_string_token(lstack.main_data[i].token_code));
     }
@@ -119,31 +113,31 @@ lex_set_scan_buffer(const char *buffer){
 
 \n               { return PARSER_EOF; }
 
-"min"            { return MATH_MIN;   }
+"min"            { return MIN;   }
 
-"max"            { return MATH_MAX;   }
+"max"            { return MAX;   }
 
-"sin"            { return MATH_SIN;   }
+"sin"            { return SIN;   }
 
-"cos"            { return MATH_COS;   }
+"cos"            { return COS;   }
 
-"pow"            { return MATH_POW;   }
+"pow"            { return POW;   }
 
-"("              { return MATH_BRACKET_START; }
+"("              { return BRACKET_START; }
 
-")"              { return MATH_BRACKET_END;   }
+")"              { return BRACKET_END;   }
 
-"+"              { return MATH_PLUS;   }
+"+"              { return PLUS;   }
 
-"-"              { return MATH_MINUS;  }
+"-"              { return MINUS;  }
 
-"/"              { return MATH_DIVIDE; }
+"/"              { return DIVIDE; }
 
-"%"              { return MATH_REMAINDER; }
+"%"              { return REMAINDER; }
 
-","              { return MATH_COMMA;     }
+","              { return COMMA;     }
 
-"="              { return MATH_EQ;        }
+"="              { return EQ;        }
 
 debug            { debug_print(); }
 
@@ -157,9 +151,9 @@ D                { parser_stack_reset(); }
 
 [a-zA-Z1-9_]+    { return VARIABLE; }
 
-[ ]              { process_white_space(1); }
+[ ]+             { /* Ignore whitespaces */ }
 
-[\t]             { process_white_space(1); }
+[\t]+            { /* Ignore tabs */ }
 
 .                { printf("detected invalid input '%s'\n", yytext); }
 
@@ -174,12 +168,18 @@ cyylex(){
     ldata.token_len = yyleng;
     next_parse_pos += yyleng;
 
+    /*
+     * Avoid pushing the new line to the stack
+     * (and allocating memory for it).
+     */
+    if (token_code == PARSER_EOF)
+	return token_code;
+
     ldata.token_val = (char *) malloc(yyleng + 1);
     if (ldata.token_val == NULL){
 	perror("malloc");
 	exit(-1);
     }
-
     memset(ldata.token_val, '\0', yyleng + 1);
     strncpy(ldata.token_val, yytext, yyleng + 1);
 
@@ -239,9 +239,9 @@ main(int argc, char **argv){
     while (1){
 
 	printf("Input : ");
+
 	fgets(lex_buffer, sizeof(lex_buffer), stdin);
 
-	/* Tell the lex which buffer to parse */
 	lex_set_scan_buffer(lex_buffer);
 
 	parse_equations();

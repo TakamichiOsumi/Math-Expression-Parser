@@ -16,13 +16,13 @@ circle_eqn(){
     CHECKPOINT(); /* preparation for failure */
 
     token_code = cyylex();
-    if (token_code != MATH_POW){
+    if (token_code != POW){
 	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
-    if (token_code != MATH_BRACKET_START){
+    if (token_code != BRACKET_START){
 	RESTORE_CHECKPOINT();
 	return false;
     }
@@ -39,7 +39,7 @@ circle_eqn(){
     }
 
     token_code = cyylex();
-    if (token_code != MATH_COMMA){
+    if (token_code != COMMA){
 	RESTORE_CHECKPOINT();
 	return false;
     }
@@ -57,26 +57,26 @@ circle_eqn(){
 
     /* pow(x, 2) will by done by this call */
     token_code = cyylex();
-    if (token_code != MATH_BRACKET_END){
+    if (token_code != BRACKET_END){
 	RESTORE_CHECKPOINT();
 	return false;
     }
 
     /* + */
     token_code = cyylex();
-    if (token_code != MATH_PLUS){
+    if (token_code != PLUS){
 	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
-    if (token_code != MATH_POW){
+    if (token_code != POW){
 	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
-    if (token_code != MATH_BRACKET_START){
+    if (token_code != BRACKET_START){
 	RESTORE_CHECKPOINT();
 	return false;
     }
@@ -93,7 +93,7 @@ circle_eqn(){
     }
 
     token_code = cyylex();
-    if (token_code != MATH_COMMA){
+    if (token_code != COMMA){
 	RESTORE_CHECKPOINT();
 	return false;
     }
@@ -110,13 +110,13 @@ circle_eqn(){
     }
 
     token_code = cyylex();
-    if (token_code != MATH_BRACKET_END){
+    if (token_code != BRACKET_END){
 	RESTORE_CHECKPOINT();
 	return false;
     }
 
     token_code = cyylex();
-    if (token_code != MATH_EQ){
+    if (token_code != EQ){
 	RESTORE_CHECKPOINT();
 	return false;
     }

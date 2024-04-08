@@ -10,33 +10,29 @@ typedef enum {
     VARIABLE,
 
     /* Symbols */
-    MATH_BRACKET_START,
-    MATH_BRACKET_END,
-    MATH_COMMA,
+    BRACKET_START,
+    BRACKET_END,
+    COMMA,
 
     /* Arithmetic */
-    MATH_PLUS,
-    MATH_MINUS,
-    MATH_DIVIDE,
-    MATH_REMAINDER,
-    MATH_EQ,
+    PLUS,
+    MINUS,
+    DIVIDE,
+    REMAINDER,
+    EQ,
 
     /* Functions */
-    MATH_MIN, /* min() */
-    MATH_MAX, /* max() */
-    MATH_SIN, /* sin() */
-    MATH_COS, /* cos() */
-    MATH_POW, /* pow() */
+    MIN, /* min() */
+    MAX, /* max() */
+    SIN, /* sin() */
+    COS, /* cos() */
+    POW, /* pow() */
 
     /* Ignored character */
     WHITE_SPACE,
 
-    DTYPE_END, /* The end indication of all enums */
-} mexppr_dtype;
-
-typedef enum {
-    PARSER_EOF = (int) DTYPE_END + 1,
-} extra_type;
+    PARSER_EOF,
+} mexpr_dtype;
 
 char *Mexpr_get_string_token(int token_code);
 

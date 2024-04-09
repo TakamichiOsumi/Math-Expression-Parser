@@ -1,3 +1,3 @@
 # Math-Expression-Parser
 
-Minor submodule for my other repository.
+Building minor submodule for my other repository.

@@ -4,6 +4,24 @@
 #include "ExportedParser.h"
 #include "MexprEnums.h"
 
+static bool
+compare_variable_id(char *expected){
+    lex_data *top_data = &lstack.main_data[lstack.stack_pointer - 1];
+
+    if (top_data->token_code != VARIABLE){
+	return false;
+    }
+
+    if (strncmp(top_data->token_val,
+		expected, strlen(expected)) != 0){
+	printf("expected the token to be '%s', but it was '%s'\n",
+	       expected, top_data->token_val);
+	return false;
+    }
+
+    return true;
+}
+
 /*
  * The syntax:
  *
@@ -59,7 +77,7 @@ parse_sql_select(){
 
     /* select */
     token_code = cyylex();
-    if (token_code != SELECT){
+    if (compare_variable_id("select") == false){
 	RESTORE_CHECKPOINT(CKP);
 	return false;
     }
@@ -70,7 +88,7 @@ parse_sql_select(){
 
     /* from */
     token_code = cyylex();
-    if (token_code != FROM){
+    if (compare_variable_id("from") == false){
 	RESTORE_CHECKPOINT(CKP);
 	return false;
     }
@@ -97,8 +115,8 @@ start_sql_parse(){
     bool rc;
 
     if ((rc = parse_sql_select()) == true){
-	printf("*valid* SQL SELECT statements\n");
+	printf("*valid*\n");
     }else{
-	printf("Invalid SQL SELECT statements\n");
+	printf("*invalid*\n");
     }
 }

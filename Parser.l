@@ -26,10 +26,10 @@ lex_push(lex_data data){
 	return;
     }
 
-    printf("Pushed '%s' whose code is '%s' at index=%d\n",
+    /* printf("Pushed '%s' whose code is '%s' at index=%d\n",
 	   data.token_val,
 	   Mexpr_get_string_token(data.token_code),
-	   lstack.stack_pointer);
+	   lstack.stack_pointer); */
 
     lstack.main_data[lstack.stack_pointer++] = data;
 }
@@ -49,9 +49,9 @@ lex_pop(){
     ldp = &lstack.main_data[lstack.stack_pointer - 1];
 
     /* debug print */
-    printf("Popped '%s' whose code is '%s' at index=%d\n",
+    /*printf("Popped '%s' whose code is '%s' at index=%d\n",
            ldp->token_val, Mexpr_get_string_token(ldp->token_code),
-	   lstack.stack_pointer - 1);
+	   lstack.stack_pointer - 1); */
 
     lstack.stack_pointer--;
 
@@ -103,7 +103,7 @@ parser_stack_reset(void){
     }
 
     for (i = 0; i < lstack.stack_pointer; i++){
-	printf("Cleaning stack level = %d\n", i);
+	/* printf("Cleaning stack level = %d\n", i); */
 	ldata = &lstack.main_data[i];
 	ldata->token_code = INVALID;
 	removed_string_len += ldata->token_len;
@@ -135,19 +135,15 @@ parser_stack_reset(void){
 
 "pow"            { return POW;   }
 
-"select"         { return SELECT; }
-
-"from"           { return FROM;   }
-
 "("              { return BRACKET_START; }
 
 ")"              { return BRACKET_END;   }
 
-"+"              { return PLUS;   }
+"+"              { return PLUS;      }
 
-"-"              { return MINUS;  }
+"-"              { return MINUS;     }
 
-"/"              { return DIVIDE; }
+"/"              { return DIVIDE;    }
 
 "%"              { return REMAINDER; }
 
@@ -201,7 +197,7 @@ yyrewind(int n){
     int removed_token_len = 0;
     lex_data ldata;
 
-    printf("Rewinding %d stack levels ...\n", n);
+    /* printf("Rewinding %d stack levels ...\n", n); */
 
     if (n <= 0)
 	return;
@@ -242,7 +238,7 @@ main(int argc, char **argv){
     while (1){
 	memset(lex_buffer, '\0', BUFFER_LEN);
 
-	printf("USER INPUT => ");
+	printf("USER INPUT : ");
 
 	fgets(lex_buffer, sizeof(lex_buffer), stdin);
 
@@ -253,6 +249,7 @@ main(int argc, char **argv){
 
 	/* Part2 : Evaluate input string as select command */
 	start_sql_parse();
+
 	parser_stack_reset();
 
 	/* Part3 : Leave this piece of codes for debug */

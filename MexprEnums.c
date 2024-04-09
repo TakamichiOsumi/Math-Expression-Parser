@@ -37,10 +37,6 @@ Mexpr_get_string_token(int token_code){
 	    return "COS";
 	case POW:
 	    return "POW";
-	case SELECT:
-	    return "SELECT";
-	case FROM:
-	    return "FROM";
 	case WHITE_SPACE:
 	    return "SPACE";
 	case TAB:

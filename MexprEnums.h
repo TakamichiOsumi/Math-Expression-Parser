@@ -17,6 +17,7 @@ typedef enum {
     /* Arithmetic */
     PLUS,
     MINUS,
+    MULTIPLY,
     DIVIDE,
     REMAINDER,
     EQ,

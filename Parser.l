@@ -26,10 +26,16 @@ lex_push(lex_data data){
 	return;
     }
 
-    /* printf("Pushed '%s' whose code is '%s' at index=%d\n",
-	   data.token_val,
-	   Mexpr_get_string_token(data.token_code),
-	   lstack.stack_pointer); */
+    if (STRING_IS_NEWLINE(data.token_val)){
+	printf("Pushed '\\n' whose code is '%s' at index=%d\n",
+	       Mexpr_get_string_token(data.token_code),
+	       lstack.stack_pointer - 1);
+    }else{
+	printf("Pushed '%s' whose code is '%s' at index=%d\n",
+	       data.token_val,
+	       Mexpr_get_string_token(data.token_code),
+	       lstack.stack_pointer);
+    }
 
     lstack.main_data[lstack.stack_pointer++] = data;
 }
@@ -49,9 +55,15 @@ lex_pop(){
     ldp = &lstack.main_data[lstack.stack_pointer - 1];
 
     /* debug print */
-    /*printf("Popped '%s' whose code is '%s' at index=%d\n",
-           ldp->token_val, Mexpr_get_string_token(ldp->token_code),
-	   lstack.stack_pointer - 1); */
+    if (STRING_IS_NEWLINE(ldp->token_val)){
+	printf("\tPopped '\\n' whose code is '%s' at index=%d\n",
+	       Mexpr_get_string_token(ldp->token_code),
+	       lstack.stack_pointer - 1);
+    }else{
+	printf("\tPopped '%s' whose code is '%s' at index=%d\n",
+	       ldp->token_val, Mexpr_get_string_token(ldp->token_code),
+	       lstack.stack_pointer - 1);
+    }
 
     lstack.stack_pointer--;
 
@@ -78,16 +90,24 @@ process_white_space_or_tab(mexpr_dtype type, int n){
     lex_push(ldata);
 }
 
-/* Make use of this function to dump any debug information */
+/* Dump any useful information for debugging */
 static void
 debug_print(void){
     int i;
-    
+
+    printf("-----\n");
     for (i = 0; i < lstack.stack_pointer; i++){
-	printf("[%03d] string '%s' is '%s' token\n", i,
-	       lstack.main_data[i].token_val,
-	       Mexpr_get_string_token(lstack.main_data[i].token_code));
+	if (STRING_IS_NEWLINE(lstack.main_data[i].token_val)){
+	    printf("\tPopped '\\n' whose code is '%s' at index=%d\n",
+		   Mexpr_get_string_token(lstack.main_data[i].token_code),
+		   lstack.stack_pointer - 1);
+	}else{
+	    printf("[%03d] string '%s' is '%s' token\n", i,
+		   lstack.main_data[i].token_val,
+		   Mexpr_get_string_token(lstack.main_data[i].token_code));
+	}
     }
+    printf("-----\n");
 }
 
 extern void
@@ -143,6 +163,8 @@ parser_stack_reset(void){
 
 "-"              { return MINUS;     }
 
+"*"              { return MULTIPLY;  }
+
 "/"              { return DIVIDE;    }
 
 "%"              { return REMAINDER; }
@@ -197,10 +219,9 @@ yyrewind(int n){
     int removed_token_len = 0;
     lex_data ldata;
 
-    /* printf("Rewinding %d stack levels ...\n", n); */
+    printf("Rewinding %d stack levels ...\n", n);
 
-    if (n <= 0)
-	return;
+    assert(n >= 0);
 
     if (next_parse_pos == lex_buffer)
 	return;
@@ -230,6 +251,7 @@ yyrewind(int n){
 
 extern void parse_equations();
 extern void start_sql_parse();
+extern void start_mathexpr_parse();
 
 int
 main(int argc, char **argv){
@@ -245,12 +267,10 @@ main(int argc, char **argv){
 	lex_set_scan_buffer(lex_buffer);
 
 	/* Part1 : Evaluate input string as circle equation */
-	// parse_equations();
+	/* parse_equations(); */
 
 	/* Part2 : Evaluate input string as select command */
-	start_sql_parse();
-
-	parser_stack_reset();
+	/* start_sql_parse(); */
 
 	/* Part3 : Leave this piece of codes for debug */
 	/*
@@ -259,6 +279,15 @@ main(int argc, char **argv){
 	    token_code = cyylex();
 	}
 	*/
+
+	/* Part4 : Evaluate input string as math expression */
+	start_mathexpr_parse();
+
+	/* Dump the stack */
+	debug_print();
+
+	/* Clean up the stack */
+	parser_stack_reset();
     }
 
     return 0;

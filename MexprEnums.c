@@ -21,6 +21,8 @@ Mexpr_get_string_token(int token_code){
 	    return "PLUS";
 	case MINUS:
 	    return "MINUS";
+	case MULTIPLY:
+	    return "MULTIPLY";
 	case DIVIDE:
 	    return "DIVIDE";
 	case REMAINDER:

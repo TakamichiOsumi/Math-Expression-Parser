@@ -245,7 +245,7 @@ start_mathexpr_parse(){
     parse_result = E();
 
     if ((token_code = cyylex()) != PARSER_EOF){
-	printf("* Rejected : the parse has left string after the syntax E\n");
+	printf("* Rejected\n");
 	return false;
     }else{
 	if (!parse_result){

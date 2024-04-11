@@ -258,7 +258,8 @@ extern bool start_mathexpr_parse();
  * Input strings as 'tested' whose last string is null.
  *
  * Iterate each string and pass it to the parser. Then,
- * check if the parser returned the expected boolean result.
+ * check whether the parser returned the expected boolean
+ * result or not.
  */
 static void
 parser_test(char **tested, bool expected_result){
@@ -278,6 +279,7 @@ parser_test(char **tested, bool expected_result){
 		   tested[iter], expected_result ? "true" : "false");
 	}else{
 	    printf("'%s' was not parsed expectedly\n", tested[iter]);
+
 	    exit(-1);
 	}
 	debug_print();
@@ -341,7 +343,7 @@ main(int argc, char **argv){
     parser_test(success, true);
     parser_test(failure, false);
 
-    printf("All tests are done\n");
+    printf("All tests are done gracefully\n");
 
     return 0;
 }

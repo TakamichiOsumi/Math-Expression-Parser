@@ -1,23 +1,25 @@
 
 %{
 
+#include <assert.h>
 #include <stdbool.h>
 #include "ExportedParser.h"
 
-lex_data ldummy = { INVALID, 0, NULL };
 lex_stack lstack = { INVALID, { 0, 0, NULL} };
 char lex_buffer[BUFFER_LEN];
 char *next_parse_pos = lex_buffer;
+
+/* Stack size without tabs, whitespaces and PARSER_EOF */
+static int minimum_stack_len = 0;
 
 extern void
 lex_set_scan_buffer(const char *buffer){
     yy_scan_string(buffer);
 }
 
-lex_data **
-mexpr_convert_infix_to_postfix(lex_data *infix, int size_in, int *size_out){
-    return NULL;
-}
+extern lex_data **
+mexpr_convert_infix_to_postfix(lex_data *infix,
+                               int size_in, int *size_out);
 
 static void
 print_lex_data_in_stack(lex_data data, char *prefix, int index){
@@ -56,12 +58,7 @@ lex_pop(){
     lex_data ldata = { INVALID, 0, NULL };
     lex_data *ldp;
 
-    if (lstack.stack_pointer <= 0){
-	/* The below code will be replaced with assert(0); */
-	printf("The stack is empty. Do not pop()\n");
-
-	return ldummy;
-    }
+    assert(lstack.stack_pointer >= 0);
 
     print_lex_data_in_stack(lstack.main_data[lstack.stack_pointer - 1],
                             "\tPop ",
@@ -109,13 +106,6 @@ extern void
 parser_stack_reset(void){
     int i, removed_string_len = 0;
     lex_data *ldata;
-
-    if ((lstack.stack_pointer < 0) ||
-	(lstack.stack_pointer > MAX_STACK_INDEX - 1)){
-	printf("the stack pointer = %d is invalid\n",
-	       lstack.stack_pointer);
-	assert(0);
-    }
 
     for (i = 0; i < lstack.stack_pointer; i++){
 	ldata = &lstack.main_data[i];
@@ -223,19 +213,22 @@ yyrewind(int n){
     int removed_token_len = 0;
     lex_data ldata;
 
-    printf("Rewinding %d stack levels ...\n", n);
-
+    /*
+     * The caller, mainly grammer parser, stores the position
+     * of stack pointer as checkpoint, before it starts to parse
+     * and call this function to restore the stack pointer for
+     * retrial of parsing.
+     *
+     * In that usage, we'll never get 'n' smaller than the
+     * current stack pointer.
+     */
     assert(n >= 0);
+    assert(lstack.stack_pointer - n >= 0);
 
     if (next_parse_pos == lex_buffer)
 	return;
 
     while(n){
-	/* Safeguard for the case 'n' > lstack's 'stack_pointer' */
-	if (lstack.stack_pointer < 0){
-	    break;
-	}
-
 	ldata = lex_pop();
 	removed_token_len += ldata.token_len;
 	n--;
@@ -295,10 +288,10 @@ parser_test(parser_func parser,
 	strncpy(lex_buffer, tested[iter], strlen(tested[iter]));
 	lex_set_scan_buffer(lex_buffer);
 
-	if (parser() == expected_result){
+	if (parser() == expected_result)
 	    printf("expected parsing '%s' to return %s and it did\n",
 		   tested[iter], expected_result ? "true" : "false");
-	}else{
+	else{
 	    printf("'%s' was not parsed expectedly, it was not '%s'\n",
 		   tested[iter], expected_result ? "Accepted" : "Rejected");
 
@@ -309,6 +302,14 @@ parser_test(parser_func parser,
 	/* Move to the next string */
 	iter++;
     }
+}
+
+lex_data **
+mexpr_convert_infix_to_postfix(lex_data *infix,
+			       int size_in, int *size_out){
+    int pointer = 0;
+
+    return NULL;
 }
 
 int

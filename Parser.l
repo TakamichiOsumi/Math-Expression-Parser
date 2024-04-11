@@ -14,29 +14,39 @@ lex_set_scan_buffer(const char *buffer){
     yy_scan_string(buffer);
 }
 
+lex_data **
+mexpr_convert_infix_to_postfix(lex_data *infix, int size_in, int *size_out){
+    return NULL;
+}
+
+static void
+print_lex_data_in_stack(lex_data data, char *prefix, int index){
+    if (STRING_IS_NEWLINE(data.token_val)){
+	printf("%s : token = '\n' whose code is '%s' at index = %d\n",
+	       prefix,
+	       Mexpr_get_string_token(data.token_code),
+	       index);
+    }else{
+	printf("%s : token = '%s' whose code is '%s' at index = %d\n",
+	       prefix,
+	       data.token_val,
+	       Mexpr_get_string_token(data.token_code),
+	       index);
+    }
+}
+
 /* Stack operations */
 static void
 lex_push(lex_data data){
-    if (lstack.stack_pointer < 0){
-	printf("The stack pointer is smaller than zero = %d\n",
-	       lstack.stack_pointer);
-	return;
-    }else if (lstack.stack_pointer > MAX_STACK_INDEX - 1){
+    assert(lstack.stack_pointer >= 0);
+
+    if (lstack.stack_pointer > MAX_STACK_INDEX - 1){
 	printf("The stack pointer is bigger than the upper limit = %d\n",
 	       lstack.stack_pointer);
 	return;
     }
 
-    if (STRING_IS_NEWLINE(data.token_val)){
-	printf("\tPushed '\\n' whose code is '%s' at index=%d\n",
-	       Mexpr_get_string_token(data.token_code),
-	       lstack.stack_pointer - 1);
-    }else{
-	printf("\tPushed '%s' whose code is '%s' at index=%d\n",
-	       data.token_val,
-	       Mexpr_get_string_token(data.token_code),
-	       lstack.stack_pointer);
-    }
+    print_lex_data_in_stack(data, "\tPush", lstack.stack_pointer - 1);
 
     lstack.main_data[lstack.stack_pointer++] = data;
 }
@@ -53,18 +63,9 @@ lex_pop(){
 	return ldummy;
     }
 
-    ldp = &lstack.main_data[lstack.stack_pointer - 1];
-
-    /* debug print */
-    if (STRING_IS_NEWLINE(ldp->token_val)){
-	printf("\tPopped '\\n' whose code is '%s' at index=%d\n",
-	       Mexpr_get_string_token(ldp->token_code),
-	       lstack.stack_pointer - 1);
-    }else{
-	printf("\tPopped '%s' whose code is '%s' at index=%d\n",
-	       ldp->token_val, Mexpr_get_string_token(ldp->token_code),
-	       lstack.stack_pointer - 1);
-    }
+    print_lex_data_in_stack(lstack.main_data[lstack.stack_pointer - 1],
+                            "\tPop ",
+                            lstack.stack_pointer - 1);
 
     lstack.stack_pointer--;
 
@@ -98,15 +99,8 @@ debug_print(void){
 
     printf("-----\n");
     for (i = 0; i < lstack.stack_pointer; i++){
-	if (STRING_IS_NEWLINE(lstack.main_data[i].token_val)){
-	    printf("\tPopped '\\n' whose code is '%s' at index=%d\n",
-		   Mexpr_get_string_token(lstack.main_data[i].token_code),
-		   lstack.stack_pointer - 1);
-	}else{
-	    printf("[%03d] string '%s' is '%s' token\n", i,
-		   lstack.main_data[i].token_val,
-		   Mexpr_get_string_token(lstack.main_data[i].token_code));
-	}
+	print_lex_data_in_stack(lstack.main_data[i], "debug",
+				lstack.stack_pointer - 1);
     }
     printf("-----\n");
 }
@@ -124,7 +118,6 @@ parser_stack_reset(void){
     }
 
     for (i = 0; i < lstack.stack_pointer; i++){
-	/* printf("Cleaning stack level = %d\n", i); */
 	ldata = &lstack.main_data[i];
 	ldata->token_code = INVALID;
 	removed_string_len += ldata->token_len;
@@ -192,7 +185,7 @@ parser_stack_reset(void){
 
 [ ]+             { process_white_space_or_tab(WHITE_SPACE, yyleng); }
 
-[\t]+            { process_white_space_or_tab(TAB, yyleng); }
+[\t]+            { process_white_space_or_tab(TAB, yyleng);         }
 
 .                { printf("detected invalid input '%s'\n", yytext); }
 

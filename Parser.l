@@ -1,6 +1,7 @@
 
 %{
 
+#include <stdbool.h>
 #include "ExportedParser.h"
 
 lex_data ldummy = { INVALID, 0, NULL };
@@ -27,11 +28,11 @@ lex_push(lex_data data){
     }
 
     if (STRING_IS_NEWLINE(data.token_val)){
-	printf("Pushed '\\n' whose code is '%s' at index=%d\n",
+	printf("\tPushed '\\n' whose code is '%s' at index=%d\n",
 	       Mexpr_get_string_token(data.token_code),
 	       lstack.stack_pointer - 1);
     }else{
-	printf("Pushed '%s' whose code is '%s' at index=%d\n",
+	printf("\tPushed '%s' whose code is '%s' at index=%d\n",
 	       data.token_val,
 	       Mexpr_get_string_token(data.token_code),
 	       lstack.stack_pointer);
@@ -251,44 +252,96 @@ yyrewind(int n){
 
 extern void parse_equations();
 extern void start_sql_parse();
-extern void start_mathexpr_parse();
+extern bool start_mathexpr_parse();
+
+/*
+ * Input strings as 'tested' whose last string is null.
+ *
+ * Iterate each string and pass it to the parser. Then,
+ * check if the parser returned the expected boolean result.
+ */
+static void
+parser_test(char **tested, bool expected_result){
+    int iter = 0;
+
+    while (tested[iter]){
+	/* Clean up */
+	parser_stack_reset();
+	memset(lex_buffer, '\0', BUFFER_LEN);
+
+	/* Copy the test string to the buffer */
+	strncpy(lex_buffer, tested[iter], strlen(tested[iter]));
+	lex_set_scan_buffer(lex_buffer);
+
+	if (start_mathexpr_parse() == expected_result){
+	    printf("expected parsing '%s' to return %s and it did\n",
+		   tested[iter], expected_result ? "true" : "false");
+	}else{
+	    printf("'%s' was not parsed expectedly\n", tested[iter]);
+	    exit(-1);
+	}
+	debug_print();
+
+	/* Move to the next */
+	iter++;
+    }
+}
 
 int
 main(int argc, char **argv){
-    int token_code;
+    char *success[BUFFER_LEN] = {
+	/* single token */
+	"1 \n",
+	"a \n",
+	/* plus/minus */
+	"1 + 2\n",
+	"1 + 2 + 3\n",
+	"a + 2 + 3\n",
+	"a - 2 - 3\n",
+	/* multiply/divide */
+	"1 * 2\n",
+	"1 * 2 * 3\n",
+	"a * 2 * 3\n",
+	"a / 2 / 3\n",
+	/* brachet */
+	"( 1 + 2 ) \n",
+	"( 1 + 2 ) * (3 * 4) \n",
+	"( 1 - 2 ) + (3 * 4) \n",
+	"((1 + 2) - 3) * 4 / (5 / 6) + (7 - 8) \n",
+	/* miscellaneous */
+	"     a   -    b   \n    ",
+	NULL,
+    };
 
-    while (1){
-	memset(lex_buffer, '\0', BUFFER_LEN);
+    char *failure[BUFFER_LEN] = {
+	/* plus/minus */
+	"+\n",
+	"- 1\n",
+	"1 + 2 + \n",
+	"a - 2 - \n",
+	/* multiply/divide */
+	"*\n",
+	"/ 1\n",
+	"1 * 2 *\n",
+	"1 * 2 /\n",
+	"a * 2 /\n",
+	"* a / 2 /\n",
+	/* brachet */
+	"(\n",
+	"( )\n",
+	"( 1 + 2\n",
+	"( 1 + 2 * (3 * 4) \n",
+	"3 * 4 / (5 / 6) + (7 - 8) )\n",
+	/* miscellaneous */
+	"1 1\n",
+	"+ *\n",
+	NULL,
+    };
 
-	printf("USER INPUT : ");
+    parser_test(success, true);
+    parser_test(failure, false);
 
-	fgets(lex_buffer, sizeof(lex_buffer), stdin);
-
-	lex_set_scan_buffer(lex_buffer);
-
-	/* Part1 : Evaluate input string as circle equation */
-	/* parse_equations(); */
-
-	/* Part2 : Evaluate input string as select command */
-	/* start_sql_parse(); */
-
-	/* Part3 : Leave this piece of codes for debug */
-	/*
-	token_code = cyylex();
-	while(token_code != PARSER_EOF){
-	    token_code = cyylex();
-	}
-	*/
-
-	/* Part4 : Evaluate input string as math expression */
-	start_mathexpr_parse();
-
-	/* Dump the stack */
-	debug_print();
-
-	/* Clean up the stack */
-	parser_stack_reset();
-    }
+    printf("All tests are done\n");
 
     return 0;
 }

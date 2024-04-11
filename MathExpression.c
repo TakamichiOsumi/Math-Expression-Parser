@@ -7,9 +7,9 @@
 /*
  * The grammer to parse mathmatical expression:
  *
- * a. E -> E + T | E - T | T
- * b. T -> T * F | T / F | F
- * c. F -> INTEGER | DOUBLE | VAR | '(' E ')'
+ * E -> E + T | E - T | T
+ * T -> T * F | T / F | F
+ * F -> INTEGER | DOUBLE | VAR | '(' E ')'
  *
  * But the first two rules contain left recursion,
  * which can't be written as it is. Thefore,
@@ -21,18 +21,20 @@
  * 3. T  -> F T'
  * 4. T' -> * F T' | / F T' | $
  * 5. F  -> INTEGER | DOUBLE | VAR | ( E )
- *
  * where $ means empty.
+ *
  */
-
 static bool E_dash(void);
 static bool T(void);
 static bool T_dash(void);
 static bool F(void);
 
-#define RETURN_FALSE \
-    { printf("%s will return false from line = %d\n",	\
-	     __FUNCTION__, __LINE__); return false; }
+#define DEBUG_RESTORE(CKP) { printf("Restore : %s will restore from line = %d\n", \
+				    __FUNCTION__, __LINE__); RESTORE_CHECKPOINT(CKP); }
+#define DEBUG_PRINT { printf("Break : %s will break from line = %d\n", \
+			     __FUNCTION__, __LINE__); }
+#define RETURN_FALSE { printf("Return : %s will return false from line = %d\n", \
+			      __FUNCTION__, __LINE__); return false; }
 
 /*
  * Any rule which contains dollar sign, the function for the non-terminal symbol
@@ -43,29 +45,19 @@ static bool F(void);
 /* 1. E  -> T E' */
 static bool
 E(void){
-    int token_code, CKP;
+    int CKP;
 
     CHECKPOINT(CKP);
 
     if (T() == false){
-	RESTORE_CHECKPOINT(CKP);
+	DEBUG_RESTORE(CKP);
 	RETURN_FALSE;
     }
 
     if (E_dash() == false){
-	RESTORE_CHECKPOINT(CKP);
+	DEBUG_RESTORE(CKP);
 	RETURN_FALSE;
     }
-
-    /*
-     * Retrun false if we didn't use all the tokens
-     * in the lex buffer.
-     *
-     * Without this condition, writing up a list of
-     * multiple 'F's returns true (like '1 1 1').
-     */
-    if ((token_code = cyylex()) != PARSER_EOF)
-	RETURN_FALSE;
 
     return true;
 }
@@ -79,37 +71,47 @@ E_dash(void){
 
     /* E' -> + T E' */
     do {
-	if ((token_code = cyylex()) != PLUS)
+	if ((token_code = cyylex()) != PLUS){
+	    DEBUG_PRINT;
 	    break;
+	}
 
-	if (T() == false)
+	if (T() == false){
+	    DEBUG_PRINT;
 	    break;
+	}
 
-	if (E_dash() == false)
+	if (E_dash() == false){
+	    DEBUG_PRINT;
 	    break;
+	}
 
 	return true;
 
     } while(0);
 
-    RESTORE_CHECKPOINT(CKP);
+    DEBUG_RESTORE(CKP);
 
     /* E' -> - T E' */
     do {
 	if ((token_code = cyylex()) != MINUS)
 	    break;
 
-	if (T() == false)
+	if (T() == false){
+	    DEBUG_PRINT;
 	    break;
+	}
 
-	if (E_dash() == false)
+	if (E_dash() == false){
+	    DEBUG_PRINT;
 	    break;
+	}
 
 	return true;
 
     } while(0);
 
-    RESTORE_CHECKPOINT(CKP);
+    DEBUG_RESTORE(CKP);
 
     return true;
 }
@@ -122,12 +124,12 @@ T(void){
     CHECKPOINT(CKP);
 
     if (F() == false){
-	RESTORE_CHECKPOINT(CKP);
+	DEBUG_RESTORE(CKP);
 	RETURN_FALSE;
     }
 
     if (T_dash() == false){
-	RESTORE_CHECKPOINT(CKP);
+	DEBUG_RESTORE(CKP);
 	RETURN_FALSE;
     }
 
@@ -146,34 +148,42 @@ T_dash(void){
 	if ((token_code = cyylex()) != MULTIPLY)
 	    break;
 
-	if (F() == false)
+	if (F() == false){
+	    DEBUG_PRINT;
 	    break;
+	}
 
-	if (T_dash() == false)
+	if (T_dash() == false){
+	    DEBUG_PRINT;
 	    break;
+	}
 
 	return true;
 
     } while(0);
 
-    RESTORE_CHECKPOINT(CKP);
+    DEBUG_RESTORE(CKP);
 
     /* T' -> / F T' */
     do {
 	if ((token_code = cyylex()) != DIVIDE)
 	    break;
 
-	if (F() == false)
+	if (F() == false){
+	    DEBUG_PRINT;
 	    break;
+	}
 
-	if (T_dash() == false)
+	if (T_dash() == false){
+	    DEBUG_PRINT;
 	    break;
+	}
 
 	return true;
 
     } while(0);
 
-    RESTORE_CHECKPOINT(CKP);
+    DEBUG_RESTORE(CKP);
 
     /* T' -> $ */
 
@@ -189,20 +199,25 @@ F(void){
 
     /* F -> '(' E ')' */
     do {
-	if ((token_code = cyylex()) != BRACKET_START)
+	if ((token_code = cyylex()) != BRACKET_START){
+	    DEBUG_PRINT;
 	    break;
+	}
 
-	if (E() == false)
-	    break;
+	if (E() == false){
+	    RETURN_FALSE;
+	}
 
-	if ((token_code = cyylex()) != BRACKET_END)
+	if ((token_code = cyylex()) != BRACKET_END){
+	    DEBUG_PRINT;
 	    break;
+	}
 
 	return true;
 
     } while(0);
 
-    RESTORE_CHECKPOINT(CKP);
+    DEBUG_RESTORE(CKP);
 
     /* F -> INTEGER | DOUBLE | VAR */
     do {
@@ -213,26 +228,32 @@ F(void){
 	    case VARIABLE:
 		return true;
 	    default:
-		RESTORE_CHECKPOINT(CKP);
 		RETURN_FALSE;
 	}
     } while(0);
 
-    RESTORE_CHECKPOINT(CKP);
+    DEBUG_RESTORE(CKP);
+
     RETURN_FALSE;
 }
 
 bool
 start_mathexpr_parse(){
-    bool rc;
+    bool parse_result;
+    int token_code;
 
-    if ((rc = E()) == true){
-	printf("*valid*\n");
+    parse_result = E();
 
-	return true;
-    }else{
-	printf("*invalid*\n");
-
+    if ((token_code = cyylex()) != PARSER_EOF){
+	printf("* Rejected : the parse has left string after the syntax E\n");
 	return false;
+    }else{
+	if (!parse_result){
+	    printf("* Rejected\n");
+	    return false;
+	}else{
+	    printf("* Accepcted\n");
+	    return true;
+	}
     }
 }

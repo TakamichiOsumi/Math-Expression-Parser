@@ -1,4 +1,56 @@
+#include <assert.h>
+#include <stdbool.h>
 #include "MexprEnums.h"
+
+int
+Mexpr_get_operator_precedence(int token_code){
+
+    switch(token_code){
+	case MAX:
+	case MIN:
+	case POW:
+	    return 7;
+	case MULTIPLY:
+	case DIVIDE:
+	case REMAINDER:
+	    return 6;
+	case PLUS:
+	case MINUS:
+	    return 5;
+	case SIN:
+	case COS:
+	    return 4;
+	case GREATER_THAN_OR_EQUAL_TO:
+	case GREATER_THAN:
+	case LESS_THAN_OR_EQUAL_TO:
+	case LESS_THAN:
+	case NEQ:
+	case EQ:
+	    return 3;
+	    /* Not yet implemented */
+	    /* case AND: return 2; */
+	    /* case OR: return 1; */
+	case BRACKET_START:
+	case BRACKET_END:
+	    return 0;
+    }
+
+    assert(0);
+
+    return 0;
+}
+
+/*
+static bool
+Math_is_operand(int opcode){
+    return true;
+}
+
+static bool
+Math_is_operator(int opcode){
+    return true;
+}
+*/
 
 char *
 Mexpr_get_string_token(int token_code){
@@ -37,8 +89,6 @@ Mexpr_get_string_token(int token_code){
 	    return "COS";
 	case POW:
 	    return "POW";
-	case NEQ:
-	    return "NEQ";
 	case GREATER_THAN_OR_EQUAL_TO:
 	    return "GREATER_THAN_OR_EQUAL_TO";
 	case GREATER_THAN:
@@ -47,6 +97,8 @@ Mexpr_get_string_token(int token_code){
 	    return "LESS_THAN_OR_EQUAL_TO";
 	case LESS_THAN:
 	    return "LESS_THAN";
+	case NEQ:
+	    return "NEQ";
 	case EQ:
 	    return "MATH_EQ";
 	case WHITE_SPACE:

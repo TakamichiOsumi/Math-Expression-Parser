@@ -70,7 +70,7 @@ lex_pop(){
 }
 
 static void
-process_white_space_or_tab(mexpr_dtype type, int n){
+process_white_space_or_tab(int type, int n){
     lex_data ldata;
 
     next_parse_pos += n;

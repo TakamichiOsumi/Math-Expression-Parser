@@ -1,13 +1,10 @@
 #ifndef __MEXPR_ENUMS_
 #define __MEXPR_ENUMS_
 
-typedef enum {
+typedef enum Mexpr_Operators {
     INVALID = 0,
 
-    /* Basic types */
-    INT,
-    DOUBLE,
-    VARIABLE,
+    MIN_OPERATOR,
 
     /* Symbols */
     BRACKET_START,
@@ -22,26 +19,45 @@ typedef enum {
     REMAINDER,
 
     /* Functions */
-    MIN, /* min() */
-    MAX, /* max() */
-    SIN, /* sin() */
-    COS, /* cos() */
-    POW, /* pow() */
+    MIN,
+    MAX,
+    SIN,
+    COS,
+    POW,
 
     /* INEQ operators */
-    NEQ,
     GREATER_THAN_OR_EQUAL_TO,
     GREATER_THAN,
     LESS_THAN_OR_EQUAL_TO,
     LESS_THAN,
+    NEQ,
     EQ,
+
+    /* TODO : Logical operators */
+    /* OR, */
+    /* AND, */
 
     WHITE_SPACE,
     TAB,
-
     PARSER_EOF,
-} mexpr_dtype;
+
+    MAX_OPERATOR,
+} Mexpr_operators;
+
+typedef enum {
+
+    MIN_DATA_TYPE = MAX_OPERATOR + 1,
+
+    /* Basic types */
+    INT,
+    DOUBLE,
+    VARIABLE,
+
+    MAX_DATA_TYPE,
+
+} Mexpr_data_types;
 
 char *Mexpr_get_string_token(int token_code);
+int Mexpr_get_operator_precedence(int token_code);
 
 #endif

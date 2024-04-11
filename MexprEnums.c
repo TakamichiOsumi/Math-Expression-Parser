@@ -27,8 +27,6 @@ Mexpr_get_string_token(int token_code){
 	    return "DIVIDE";
 	case REMAINDER:
 	    return "REMAINDER";
-	case EQ:
-	    return "MATH_EQ";
 	case MIN:
 	    return "MIN";
 	case MAX:
@@ -39,6 +37,18 @@ Mexpr_get_string_token(int token_code){
 	    return "COS";
 	case POW:
 	    return "POW";
+	case NEQ:
+	    return "NEQ";
+	case GREATER_THAN_OR_EQUAL_TO:
+	    return "GREATER_THAN_OR_EQUAL_TO";
+	case GREATER_THAN:
+	    return "GREATER_THAN";
+	case LESS_THAN_OR_EQUAL_TO:
+	    return "LESS_THAN_OR_EQUAL_TO";
+	case LESS_THAN:
+	    return "LESS_THAN";
+	case EQ:
+	    return "MATH_EQ";
 	case WHITE_SPACE:
 	    return "SPACE";
 	case TAB:

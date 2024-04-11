@@ -172,6 +172,16 @@ parser_stack_reset(void){
 
 ","              { return COMMA;     }
 
+"!="             { return NEQ;       }
+
+">="             { return GREATER_THAN_OR_EQUAL_TO; }
+
+"<="             { return LESS_THAN_OR_EQUAL_TO;    }
+
+"<"              { return LESS_THAN;    }
+
+">"              { return GREATER_THAN; }
+
 "="              { return EQ;        }
 
 0|-?[1-9][0-9]*  { return INT;       }
@@ -253,6 +263,9 @@ yyrewind(int n){
 extern void parse_equations();
 extern void start_sql_parse();
 extern bool start_mathexpr_parse();
+extern bool start_ineq_mathexpr_parse();
+
+typedef bool (*parser_func)(void);
 
 /*
  * Input strings as 'tested' whose last string is null.
@@ -260,9 +273,14 @@ extern bool start_mathexpr_parse();
  * Iterate each string and pass it to the parser. Then,
  * check whether the parser returned the expected boolean
  * result or not.
+ *
+ * Note : if one string of 'tested' ended without a new line,
+ * then, quit the test and exit for quick notification.
  */
 static void
-parser_test(char **tested, bool expected_result){
+parser_test(parser_func parser,
+	    char **tested, bool expected_result){
+    char last_char;
     int iter = 0;
 
     while (tested[iter]){
@@ -270,21 +288,32 @@ parser_test(char **tested, bool expected_result){
 	parser_stack_reset();
 	memset(lex_buffer, '\0', BUFFER_LEN);
 
+	/* Pretest format check */
+	if (strlen(tested[iter]) > 2){
+	    last_char = tested[iter][strlen(tested[iter]) - 1];
+	    if (last_char != '\n'){
+		printf("invalid string format : '%s'\n",
+		       tested[iter]);
+		exit(-1);
+	    }
+	}
+
 	/* Copy the test string to the buffer */
 	strncpy(lex_buffer, tested[iter], strlen(tested[iter]));
 	lex_set_scan_buffer(lex_buffer);
 
-	if (start_mathexpr_parse() == expected_result){
+	if (parser() == expected_result){
 	    printf("expected parsing '%s' to return %s and it did\n",
 		   tested[iter], expected_result ? "true" : "false");
 	}else{
-	    printf("'%s' was not parsed expectedly\n", tested[iter]);
+	    printf("'%s' was not parsed expectedly, it was not '%s'\n",
+		   tested[iter], expected_result ? "Accepted" : "Rejected");
 
 	    exit(-1);
 	}
 	debug_print();
 
-	/* Move to the next */
+	/* Move to the next string */
 	iter++;
     }
 }
@@ -293,8 +322,8 @@ int
 main(int argc, char **argv){
     char *success[BUFFER_LEN] = {
 	/* single token */
-	"1 \n",
-	"a \n",
+	"1\n",
+	"a\n",
 	/* plus/minus */
 	"1 + 2\n",
 	"1 + 2 + 3\n",
@@ -311,7 +340,7 @@ main(int argc, char **argv){
 	"( 1 - 2 ) + (3 * 4) \n",
 	"((1 + 2) - 3) * 4 / (5 / 6) + (7 - 8) \n",
 	/* miscellaneous */
-	"     a   -    b   \n    ",
+	"      a   -    b      \n",
 	NULL,
     };
 
@@ -340,8 +369,35 @@ main(int argc, char **argv){
 	NULL,
     };
 
-    parser_test(success, true);
-    parser_test(failure, false);
+    char *ineq_success[BUFFER_LEN] = {
+	"1 < 2\n",
+	"1 > 2\n",
+	"a > (1 + 10)\n",
+	"(a - b) <= (c + d + e + (f / g))\n",
+	"(a - (b * c)) >= (d + e)\n",
+	"a - b = c - d\n",
+	NULL,
+    };
+
+    char *ineq_failure[BUFFER_LEN] = {
+	">\n"
+	">=\n",
+	"< 1\n",
+	"() < ( )\n",
+	"< <\n",
+	"* < 1\n",
+	"* 1 < 2\n",
+	NULL,
+    };
+
+    parser_test(start_mathexpr_parse,
+		success, true);
+    parser_test(start_mathexpr_parse,
+		failure, false);
+    parser_test(start_ineq_mathexpr_parse,
+		ineq_success, true);
+    parser_test(start_ineq_mathexpr_parse,
+		ineq_failure, false);
 
     printf("All tests are done gracefully\n");
 

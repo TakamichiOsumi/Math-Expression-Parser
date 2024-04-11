@@ -11,7 +11,7 @@
  * T -> T * F | T / F | F
  * F -> INTEGER | DOUBLE | VAR | '(' E ')'
  *
- * But the first two rules contain left recursion,
+ * But, the first two rules contain left recursion,
  * which can't be written as it is. Thefore,
  * redefine them with some technique to avoid
  * the coding problem as below.
@@ -23,11 +23,17 @@
  * 5. F  -> INTEGER | DOUBLE | VAR | ( E )
  * where $ means empty.
  *
+ * Also, define (in)equality operators as grammer:
+ *
+ * Q    -> E INEQ E
+ * INEQ -> = | != | < | > | <= | >=
+ *
  */
 static bool E_dash(void);
 static bool T(void);
 static bool T_dash(void);
 static bool F(void);
+static bool INEQ(void);
 
 #define DEBUG_RESTORE(CKP) { printf("Restore : %s will restore from line = %d\n", \
 				    __FUNCTION__, __LINE__); RESTORE_CHECKPOINT(CKP); }
@@ -37,9 +43,9 @@ static bool F(void);
 			      __FUNCTION__, __LINE__); return false; }
 
 /*
- * Any rule which contains dollar sign, the function for the non-terminal symbol
- * must never return error. It should always return success. The way to implement
- * dollar sign is simply return success.
+ * With regard to any rule which contains dollar sign, the function for
+ * the non-terminal symbol must never return error. It should always
+ * return success. The way to implement dollar sign is simply return success.
  */
 
 /* 1. E  -> T E' */
@@ -238,11 +244,84 @@ F(void){
 }
 
 bool
+Q(void){
+    int CKP;
+
+    CHECKPOINT(CKP);
+
+    if (E() == false){
+	RESTORE_CHECKPOINT(CKP);
+	RETURN_FALSE;
+    }
+
+    if (INEQ() == false){
+	RESTORE_CHECKPOINT(CKP);
+	RETURN_FALSE;
+    }
+
+    if (E() == false){
+	RESTORE_CHECKPOINT(CKP);
+	RETURN_FALSE;
+    }
+
+    return true;
+}
+
+static bool
+INEQ(void){
+    int token_code, CKP;
+
+    CHECKPOINT(CKP);
+
+    token_code = cyylex();
+    switch(token_code){
+	case NEQ:
+	case GREATER_THAN_OR_EQUAL_TO:
+	case GREATER_THAN:
+	case LESS_THAN_OR_EQUAL_TO:
+	case LESS_THAN:
+	case EQ:
+	    return true;
+	default:{
+	    RESTORE_CHECKPOINT(CKP);
+	    RETURN_FALSE;
+	}
+    }
+}
+
+/*
+ * The caller of E()
+ */
+bool
 start_mathexpr_parse(){
     bool parse_result;
     int token_code;
 
     parse_result = E();
+
+    if ((token_code = cyylex()) != PARSER_EOF){
+	printf("* Rejected\n");
+	return false;
+    }else{
+	if (!parse_result){
+	    printf("* Rejected\n");
+	    return false;
+	}else{
+	    printf("* Accepcted\n");
+	    return true;
+	}
+    }
+}
+
+/*
+ * The caller of Q()
+ */
+bool
+start_ineq_mathexpr_parse(){
+    bool parse_result;
+    int token_code;
+
+    parse_result = Q();
 
     if ((token_code = cyylex()) != PARSER_EOF){
 	printf("* Rejected\n");

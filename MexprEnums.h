@@ -20,7 +20,6 @@ typedef enum {
     MULTIPLY,
     DIVIDE,
     REMAINDER,
-    EQ,
 
     /* Functions */
     MIN, /* min() */
@@ -28,6 +27,14 @@ typedef enum {
     SIN, /* sin() */
     COS, /* cos() */
     POW, /* pow() */
+
+    /* INEQ operators */
+    NEQ,
+    GREATER_THAN_OR_EQUAL_TO,
+    GREATER_THAN,
+    LESS_THAN_OR_EQUAL_TO,
+    LESS_THAN,
+    EQ,
 
     WHITE_SPACE,
     TAB,

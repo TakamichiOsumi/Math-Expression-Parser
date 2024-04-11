@@ -13,7 +13,6 @@ typedef struct lex_data {
     int token_len;
     char *token_val;
 } lex_data;
-extern lex_data ldummy;
 
 typedef struct lex_stack {
     int stack_pointer;

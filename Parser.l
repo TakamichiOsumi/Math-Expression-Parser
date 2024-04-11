@@ -17,9 +17,9 @@ lex_set_scan_buffer(const char *buffer){
     yy_scan_string(buffer);
 }
 
-extern lex_data **
-mexpr_convert_infix_to_postfix(lex_data *infix,
-                               int size_in, int *size_out);
+extern lex_data *
+convert_infix_to_postfix(lex_data *infix,
+                         int size_in, int *size_out);
 
 static void
 print_lex_data_in_stack(lex_data data, char *prefix, int index){
@@ -288,12 +288,21 @@ parser_test(parser_func parser,
 	strncpy(lex_buffer, tested[iter], strlen(tested[iter]));
 	lex_set_scan_buffer(lex_buffer);
 
-	if (parser() == expected_result)
+	if (parser() == expected_result){
+	    lex_data *postfix_stack;
+	    int postfix_stack_size;
+
 	    printf("expected parsing '%s' to return %s and it did\n",
-		   tested[iter], expected_result ? "true" : "false");
-	else{
+		   tested[iter],
+		   expected_result ? "true" : "false");
+
+	    postfix_stack = convert_infix_to_postfix(lstack.main_data,
+						     lstack.stack_pointer,
+						     &postfix_stack_size);
+	}else{
 	    printf("'%s' was not parsed expectedly, it was not '%s'\n",
-		   tested[iter], expected_result ? "Accepted" : "Rejected");
+		   tested[iter],
+		   expected_result ? "Accepted" : "Rejected");
 
 	    exit(-1);
 	}
@@ -304,9 +313,9 @@ parser_test(parser_func parser,
     }
 }
 
-lex_data **
-mexpr_convert_infix_to_postfix(lex_data *infix,
-			       int size_in, int *size_out){
+lex_data *
+convert_infix_to_postfix(lex_data *infix, int size_in,
+			 int *size_out){
     int pointer = 0;
 
     return NULL;

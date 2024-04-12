@@ -12,7 +12,7 @@
  * F -> INTEGER | DOUBLE | VAR | '(' E ')'
  *
  * But, the first two rules contain left recursion,
- * which can't be written as it is. Thefore,
+ * which can't be written as it is. Therefore,
  * redefine them with some technique to avoid
  * the coding problem as below.
  *
@@ -35,13 +35,6 @@ static bool T_dash(void);
 static bool F(void);
 static bool INEQ(void);
 
-#define DEBUG_RESTORE(CKP) { printf("Restore : %s will restore from line = %d\n", \
-				    __FUNCTION__, __LINE__); RESTORE_CHECKPOINT(CKP); }
-#define DEBUG_PRINT { printf("Break : %s will break from line = %d\n", \
-			     __FUNCTION__, __LINE__); }
-#define RETURN_FALSE { printf("Return : %s will return false from line = %d\n", \
-			      __FUNCTION__, __LINE__); return false; }
-
 /*
  * With regard to any rule which contains dollar sign, the function for
  * the non-terminal symbol must never return error. It should always
@@ -56,13 +49,13 @@ E(void){
     CHECKPOINT(CKP);
 
     if (T() == false){
-	DEBUG_RESTORE(CKP);
-	RETURN_FALSE;
+	RESTORE_CHECKPOINT(CKP);
+	return false;
     }
 
     if (E_dash() == false){
-	DEBUG_RESTORE(CKP);
-	RETURN_FALSE;
+	RESTORE_CHECKPOINT(CKP);
+	return false;
     }
 
     return true;
@@ -77,47 +70,37 @@ E_dash(void){
 
     /* E' -> + T E' */
     do {
-	if ((token_code = cyylex()) != PLUS){
-	    DEBUG_PRINT;
+	if ((token_code = cyylex()) != PLUS)
 	    break;
-	}
 
-	if (T() == false){
-	    DEBUG_PRINT;
+	if (T() == false)
 	    break;
-	}
 
-	if (E_dash() == false){
-	    DEBUG_PRINT;
+	if (E_dash() == false)
 	    break;
-	}
 
 	return true;
 
     } while(0);
 
-    DEBUG_RESTORE(CKP);
+    RESTORE_CHECKPOINT(CKP);
 
     /* E' -> - T E' */
     do {
 	if ((token_code = cyylex()) != MINUS)
 	    break;
 
-	if (T() == false){
-	    DEBUG_PRINT;
+	if (T() == false)
 	    break;
-	}
 
-	if (E_dash() == false){
-	    DEBUG_PRINT;
+	if (E_dash() == false)
 	    break;
-	}
 
 	return true;
 
     } while(0);
 
-    DEBUG_RESTORE(CKP);
+    RESTORE_CHECKPOINT(CKP);
 
     return true;
 }
@@ -130,13 +113,13 @@ T(void){
     CHECKPOINT(CKP);
 
     if (F() == false){
-	DEBUG_RESTORE(CKP);
-	RETURN_FALSE;
+	RESTORE_CHECKPOINT(CKP);
+	return false;
     }
 
     if (T_dash() == false){
-	DEBUG_RESTORE(CKP);
-	RETURN_FALSE;
+	RESTORE_CHECKPOINT(CKP);
+	return false;
     }
 
     return true;
@@ -154,49 +137,41 @@ T_dash(void){
 	if ((token_code = cyylex()) != MULTIPLY)
 	    break;
 
-	if (F() == false){
-	    DEBUG_PRINT;
+	if (F() == false)
 	    break;
-	}
 
-	if (T_dash() == false){
-	    DEBUG_PRINT;
+	if (T_dash() == false)
 	    break;
-	}
 
 	return true;
 
     } while(0);
 
-    DEBUG_RESTORE(CKP);
+    RESTORE_CHECKPOINT(CKP);
 
     /* T' -> / F T' */
     do {
 	if ((token_code = cyylex()) != DIVIDE)
 	    break;
 
-	if (F() == false){
-	    DEBUG_PRINT;
+	if (F() == false)
 	    break;
-	}
 
-	if (T_dash() == false){
-	    DEBUG_PRINT;
+	if (T_dash() == false)
 	    break;
-	}
 
 	return true;
 
     } while(0);
 
-    DEBUG_RESTORE(CKP);
+    RESTORE_CHECKPOINT(CKP);
 
     /* T' -> $ */
 
     return true;
 }
 
-/* 5. F -> INTEGER | DOUBLE | VAR | ( E ) */
+/* 5. F -> INTEGER | DOUBLE | VAR | '(' E ')' */
 static bool
 F(void){
     int token_code, CKP;
@@ -205,25 +180,20 @@ F(void){
 
     /* F -> '(' E ')' */
     do {
-	if ((token_code = cyylex()) != BRACKET_START){
-	    DEBUG_PRINT;
+	if ((token_code = cyylex()) != BRACKET_START)
 	    break;
-	}
 
-	if (E() == false){
-	    RETURN_FALSE;
-	}
+	if (E() == false)
+	    return false;
 
-	if ((token_code = cyylex()) != BRACKET_END){
-	    DEBUG_PRINT;
+	if ((token_code = cyylex()) != BRACKET_END)
 	    break;
-	}
 
 	return true;
 
     } while(0);
 
-    DEBUG_RESTORE(CKP);
+    RESTORE_CHECKPOINT(CKP);
 
     /* F -> INTEGER | DOUBLE | VAR */
     do {
@@ -234,13 +204,13 @@ F(void){
 	    case VARIABLE:
 		return true;
 	    default:
-		RETURN_FALSE;
+		return false;
 	}
     } while(0);
 
-    DEBUG_RESTORE(CKP);
+    RESTORE_CHECKPOINT(CKP);
 
-    RETURN_FALSE;
+    return false;
 }
 
 bool
@@ -251,17 +221,17 @@ Q(void){
 
     if (E() == false){
 	RESTORE_CHECKPOINT(CKP);
-	RETURN_FALSE;
+	return false;
     }
 
     if (INEQ() == false){
 	RESTORE_CHECKPOINT(CKP);
-	RETURN_FALSE;
+	return false;
     }
 
     if (E() == false){
 	RESTORE_CHECKPOINT(CKP);
-	RETURN_FALSE;
+	return false;
     }
 
     return true;
@@ -284,7 +254,7 @@ INEQ(void){
 	    return true;
 	default:{
 	    RESTORE_CHECKPOINT(CKP);
-	    RETURN_FALSE;
+	    return false;
 	}
     }
 }

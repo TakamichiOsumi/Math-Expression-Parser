@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <stdbool.h>
 #include "ExportedParser.h"
+#include "PostfixConverter.h"
 
 lex_stack lstack = { INVALID, { 0, 0, NULL} };
 char lex_buffer[BUFFER_LEN];
@@ -313,13 +314,9 @@ parser_test(parser_func parser,
     }
 }
 
-lex_data *
-convert_infix_to_postfix(lex_data *infix, int size_in,
-			 int *size_out){
-    int pointer = 0;
-
-    return NULL;
-}
+extern lex_data *convert_infix_to_postfix(lex_data *infix,
+					  int size_in,
+					  int *size_out);
 
 int
 main(int argc, char **argv){

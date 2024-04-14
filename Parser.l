@@ -320,9 +320,11 @@ main(int argc, char **argv){
     char *success[BUFFER_LEN] = {
 	/* single token */
 	"1\n",
+	"-2\n",
 	"a\n",
 	/* plus/minus */
 	"1 + 2\n",
+	"-1 - -2\n",
 	"1 + 2 + 3\n",
 	"a + 2 + 3\n",
 	"a - 2 - 3\n",
@@ -335,6 +337,7 @@ main(int argc, char **argv){
 	"( 1 + 2 ) \n",
 	"( 1 + 2 ) * (3 * 4) \n",
 	"( 1 - 2 ) + (3 * 4) \n",
+	"( 3 ) + ( -10)\n",
 	"((1 + 2) - 3) * 4 / (5 / 6) + (7 - 8) \n",
 	/* miscellaneous */
 	"      a   -    b      \n",
@@ -373,6 +376,7 @@ main(int argc, char **argv){
 	"(a - b) <= (c + d + e + (f / g))\n",
 	"(a - (b * c)) >= (d + e)\n",
 	"a - b = c - d\n",
+	"( 5 ) >= ( 10 )\n",
 	NULL,
     };
 
@@ -381,9 +385,12 @@ main(int argc, char **argv){
 	">=\n",
 	"< 1\n",
 	"() < ( )\n",
+	"( + ) < ()\n",
+	"( * ) < ( - )\n",
 	"< <\n",
+	"1 < 2 3\n",
 	"1 < < 2\n",
-	"1 < < 10 5\n",
+	"1 < < 2 3\n",
 	"* < 1\n",
 	"* 1 < 2\n",
 	NULL,

@@ -10,9 +10,6 @@ lex_stack lstack = { INVALID, { 0, 0, NULL} };
 char lex_buffer[BUFFER_LEN];
 char *next_parse_pos = lex_buffer;
 
-/* Stack size without tabs, whitespaces and PARSER_EOF */
-static int minimum_stack_len = 0;
-
 extern void
 lex_set_scan_buffer(const char *buffer){
     yy_scan_string(buffer);
@@ -385,6 +382,8 @@ main(int argc, char **argv){
 	"< 1\n",
 	"() < ( )\n",
 	"< <\n",
+	"1 < < 2\n",
+	"1 < < 10 5\n",
 	"* < 1\n",
 	"* 1 < 2\n",
 	NULL,

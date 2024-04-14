@@ -294,9 +294,16 @@ parser_test(parser_func parser,
 		   tested[iter],
 		   expected_result ? "true" : "false");
 
-	    postfix_stack = convert_infix_to_postfix(lstack.main_data,
-						     lstack.stack_pointer,
-						     &postfix_stack_size);
+	    /*
+	     * Execute postfix conversion only for successful
+	     * arithmetic cases
+	     */
+	    if (parser == start_mathexpr_parse && expected_result == true){
+		postfix_stack = convert_infix_to_postfix(lstack.main_data,
+							 lstack.stack_pointer,
+							 &postfix_stack_size);
+	    }
+
 	}else{
 	    printf("'%s' was not parsed expectedly, it was not '%s'\n",
 		   tested[iter],
@@ -337,7 +344,7 @@ main(int argc, char **argv){
 	"( 1 + 2 ) \n",
 	"( 1 + 2 ) * (3 * 4) \n",
 	"( 1 - 2 ) + (3 * 4) \n",
-	"( 3 ) + ( -10)\n",
+	"( 3 ) + ( -10 )\n",
 	"((1 + 2) - 3) * 4 / (5 / 6) + (7 - 8) \n",
 	/* miscellaneous */
 	"      a   -    b      \n",

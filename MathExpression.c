@@ -7,15 +7,15 @@
 /*
  * The production rules for math expression that avoid left recursion :
  *
- * E  ->  T E'
- * E' ->  + T E' | - T E' | $
- * T  ->  F T'
- * T' ->  * F T' | / F T' | $
- * F  ->  INT | DOUBLE | VAR | ( E ) | G ( E , E ) | P ( E )
- * Q  ->  E I E
- * I  ->  = | != | < | > | <= | >=
- * P  ->  SIN | COS | SQRT
- * G  ->  MAX | MIN | POW
+ *  E  ->  T E'
+ *  E' ->  + T E' | - T E' | $
+ *  T  ->  F T'
+ *  T' ->  * F T' | / F T' | $
+ *  F  ->  INT | DOUBLE | VAR | ( E ) | G ( E , E ) | P ( E )
+ *  Q  ->  E I E
+ *  I  ->  = | != | < | > | <= | >=
+ *  P  ->  SIN | COS | SQRT
+ *  G  ->  MAX | MIN | POW
  *
  * Dollar sign means empty.
  *
@@ -93,6 +93,16 @@ E_dash(void){
 
     } while(0);
 
+    /*
+     * This production rule contains dollar.
+     *
+     * Restore the parse position of lex buffer and
+     * the stack contents that were moved or created
+     * since this function started, to their original
+     * states. Then, return true.
+     *
+     * Let the caller apply other grammer rule.
+     */
     RESTORE_CHECKPOINT(CKP);
 
     return true;
@@ -162,7 +172,11 @@ T_dash(void){
 
     RESTORE_CHECKPOINT(CKP);
 
-    /* T' -> $ */
+    /*
+     * T' -> $.
+     *
+     * See E_dash() for more detail.
+     */
 
     return true;
 }

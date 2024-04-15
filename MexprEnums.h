@@ -1,7 +1,7 @@
 #ifndef __MEXPR_ENUMS_
 #define __MEXPR_ENUMS_
 
-typedef enum Mexpr_Operators {
+typedef enum mexpr_operator {
     INVALID = 0,
 
     MIN_OPERATOR,
@@ -28,7 +28,7 @@ typedef enum Mexpr_Operators {
     SQR,
     SQRT,
 
-    /* INEQ operators */
+    /* Inequality operators */
     GREATER_THAN_OR_EQUAL_TO,
     GREATER_THAN,
     LESS_THAN_OR_EQUAL_TO,
@@ -45,11 +45,13 @@ typedef enum Mexpr_Operators {
     PARSER_EOF,
 
     MAX_OPERATOR,
-} Mexpr_operators;
+} mexpr_operator;
 
-typedef enum {
+typedef enum mexpr_data_type {
 
-    MIN_DATA_TYPE = MAX_OPERATOR + 1,
+    INVALID_DATA_TYPE = MAX_OPERATOR + 1,
+
+    MIN_DATA_TYPE,
 
     /* Basic types */
     INT,
@@ -58,7 +60,7 @@ typedef enum {
 
     MAX_DATA_TYPE,
 
-} Mexpr_data_types;
+} mexpr_data_type;
 
 char *Mexpr_get_string_token(int token_code);
 int Mexpr_operator_precedence(int token_code);

@@ -38,17 +38,20 @@ E(void){
 
     CHECKPOINT(CKP);
 
-    if (T() == false){
-	RESTORE_CHECKPOINT(CKP);
-	return false;
-    }
+    do {
+	if (T() == false)
+	    break;
 
-    if (E_dash() == false){
-	RESTORE_CHECKPOINT(CKP);
-	return false;
-    }
+	if (E_dash() == false)
+	    break;
 
-    return true;
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return false;
 }
 
 /* E' -> + T E' | - T E' | $ */
@@ -102,17 +105,20 @@ T(void){
 
     CHECKPOINT(CKP);
 
-    if (F() == false){
-	RESTORE_CHECKPOINT(CKP);
-	return false;
-    }
+    do {
+	if (F() == false)
+	    break;
 
-    if (T_dash() == false){
-	RESTORE_CHECKPOINT(CKP);
-	return false;
-    }
+	if (T_dash() == false)
+	    break;
 
-    return true;
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return false;
 }
 
 /* T' -> * F T' | / F T' | $ */
@@ -174,7 +180,7 @@ F(void){
 	    break;
 
 	if (E() == false)
-	    return false;
+	    break;
 
 	if ((token_code = cyylex()) != BRACKET_END)
 	    break;
@@ -255,22 +261,23 @@ Q(void){
 
     CHECKPOINT(CKP);
 
-    if (E() == false){
-	RESTORE_CHECKPOINT(CKP);
-	return false;
-    }
+    do {
+	if (E() == false)
+	    break;
 
-    if (I() == false){
-	RESTORE_CHECKPOINT(CKP);
-	return false;
-    }
+	if (I() == false)
+	    break;
 
-    if (E() == false){
-	RESTORE_CHECKPOINT(CKP);
-	return false;
-    }
+	if (E() == false)
+	    break;
 
-    return true;
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return false;
 }
 
 static bool
@@ -288,11 +295,13 @@ I(void){
 	case NEQ:
 	case EQ:
 	    return true;
-	default:{
-	    RESTORE_CHECKPOINT(CKP);
-	    return false;
-	}
+	default:
+	    break;
     }
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return false;
 }
 
 static bool

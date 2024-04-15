@@ -58,6 +58,6 @@ typedef enum {
 } Mexpr_data_types;
 
 char *Mexpr_get_string_token(int token_code);
-int Mexpr_get_operator_precedence(int token_code);
+int Mexpr_operator_precedence(int token_code);
 
 #endif

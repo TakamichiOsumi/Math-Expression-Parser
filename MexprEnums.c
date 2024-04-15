@@ -3,7 +3,7 @@
 #include "MexprEnums.h"
 
 int
-Mexpr_get_operator_precedence(int token_code){
+Mexpr_operator_precedence(int token_code){
 
     switch(token_code){
 	case MAX:

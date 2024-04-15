@@ -16,12 +16,45 @@
      token_code == MULTIPLY || token_code == DIVIDE ||	\
      token_code == REMAINDER)
 
+static void
+handle_operator(stack *s, lex_data *current){
+    lex_data *top;
+
+    do {
+	/* Now, do we have at least one element in the stack ? */
+	if (stack_is_empty(s)){
+	    stack_push(s, current);
+	    break;
+	}
+
+	/* top() returns its reference only */
+	top = (lex_data *) stack_top(s);
+
+	if (top->token_code == BRACKET_START){
+	    stack_push(s, current);
+	    break;
+	}
+
+	if (Mexpr_operator_precedence(top->token_code)
+	    < Mexpr_operator_precedence(current->token_code)){
+	    stack_push(s, current);
+	    break;
+	}
+
+	/* pop() deletes an element from the top */
+	top = (lex_data *) stack_pop(s);
+	printf("%s ", top->token_val);
+
+    } while(1);
+
+}
+
 lex_data *
 convert_infix_to_postfix(lex_data *infix, int size_in,
 			 int *size_out){
     stack *s;
     int iter;
-    lex_data *curr, *top;
+    lex_data *curr;
 
     s = stack_init(size_in);
 
@@ -43,35 +76,15 @@ convert_infix_to_postfix(lex_data *infix, int size_in,
 
 	/* printf("iter= '%02d', val = %s\n", iter, curr->token_val); */
 
-	if (IS_OPERAND(curr->token_code)){
+	if (IS_OPERAND(curr->token_code))
 	    printf("%s ", curr->token_val);
-	}else if (curr->token_code == BRACKET_START){
+	else if (curr->token_code == BRACKET_START)
 	    stack_push(s, curr);
-	}else if (IS_OPERATOR(curr->token_code)){
-	    do {
-		if (stack_is_empty(s)){
-		    stack_push(s, curr);
-		    break;
-		}
+	else if (IS_OPERATOR(curr->token_code))
+	    handle_operator(s, curr);
+	else if (curr->token_code == BRACKET_END){
+	    lex_data *top;
 
-		top = (lex_data *) stack_top(s);
-		if (top->token_code == BRACKET_START){
-		    stack_push(s, curr);
-		    break;
-		}
-
-		if (Mexpr_get_operator_precedence(top->token_code)
-		    < Mexpr_get_operator_precedence(curr->token_code)){
-		    stack_push(s, curr);
-		    break;
-		}
-
-		top = (lex_data *) stack_pop(s);
-		printf("%s ", top->token_val);
-
-	    }while(1);
-
-	}else if (curr->token_code == BRACKET_END){
 	    top = (lex_data *) stack_pop(s);
 	    while(top->token_code != BRACKET_START){
 		printf("%s ", top->token_val);
@@ -85,7 +98,7 @@ convert_infix_to_postfix(lex_data *infix, int size_in,
 	printf("%s ", curr->token_val);
     }
 
-    printf("\n-----\n");
+    printf("\n-------------------\n");
 
     return NULL;
 }

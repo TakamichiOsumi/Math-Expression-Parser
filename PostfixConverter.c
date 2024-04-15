@@ -3,10 +3,22 @@
 #include "ExportedParser.h"
 #include "Stack/stack.h"
 
+/* Prefixed like it's one part of stack library */
+static int
+stack_top_token_code(stack *s){
+    lex_data *top;
+
+    assert(!stack_is_empty(s));
+
+    top = (lex_data *) stack_top(s);
+
+    return top->token_code;
+}
+
 static bool
 is_skipped_token(token_code){
-    return (token_code == WHITE_SPACE ||
-	    token_code == TAB || token_code == PARSER_EOF);
+    return (token_code == WHITE_SPACE || token_code == TAB ||
+	    token_code == PARSER_EOF);
 }
 
 static bool
@@ -56,7 +68,7 @@ handle_operator(stack *s, lex_data *current){
     while(!stack_is_empty(s) &&
 	  !is_unary_operator(current->token_code) &&
 	  (Mexpr_operator_precedence(current->token_code) <=
-	   Mexpr_operator_precedence(((lex_data *) stack_top(s))->token_code))){
+	   Mexpr_operator_precedence(stack_top_token_code(s)))){
 	top = (lex_data *) stack_pop(s);
 	printf("%s ", top->token_val);
     }
@@ -98,14 +110,17 @@ convert_infix_to_postfix(lex_data *infix, int size_in,
 	    lex_data *top;
 
 	    while(!stack_is_empty(s) &&
-		  (((lex_data *) stack_top(s))->token_code != BRACKET_START)){
+		  stack_top_token_code(s) != BRACKET_START){
 		top = (lex_data *) stack_pop(s);
 		printf("%s ", top->token_val);
 	    }
+
+	    /* The next token must be BRACKET_START */
 	    top = stack_pop(s);
+	    assert(top->token_code == BRACKET_START);
+
 	    while(!stack_is_empty(s)){
-		top = (lex_data *) stack_top(s);
-		if (is_unary_operator(top->token_code)){
+		if (is_unary_operator(stack_top_token_code(s))){
 		    top = stack_pop(s);
 		    printf("%s ", top->token_val);
 		    continue;
@@ -116,9 +131,9 @@ convert_infix_to_postfix(lex_data *infix, int size_in,
 	    lex_data *top;
 
 	    while(!stack_is_empty(s) &&
-		  (top = (lex_data *) stack_top(s))->token_code != BRACKET_START){
-		printf("%s ", top->token_val);
+		  stack_top_token_code(s) != BRACKET_START){
 		top = stack_pop(s);
+		printf("%s ", top->token_val);
 	    }
 	}
     }

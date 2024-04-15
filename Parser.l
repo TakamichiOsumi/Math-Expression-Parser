@@ -131,11 +131,15 @@ parser_stack_reset(void){
 
 "max"            { return MAX;   }
 
+"pow"            { return POW;   }
+
 "sin"            { return SIN;   }
 
 "cos"            { return COS;   }
 
-"pow"            { return POW;   }
+"sqrt"           { return SQRT;  }
+
+"sqr"            { return SQR;   }
 
 "("              { return BRACKET_START; }
 
@@ -349,6 +353,9 @@ main(int argc, char **argv){
 	"( 1 + 2 * (3 - 4 ) ) / 5 - 6\n",
 	/* miscellaneous */
 	"      a   -    b      \n",
+	"max(a, b) \n",
+	"a + sqrt(b) * sqrt(c) + pow(d, e)\n",
+	"((-1 * b) + sqrt(sqr(b) - 4 * a * c)) / (2 * a)\n",
 	NULL,
     };
 

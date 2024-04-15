@@ -19,6 +19,8 @@ Mexpr_operator_precedence(int token_code){
 	    return 5;
 	case SIN:
 	case COS:
+	case SQR:
+	case SQRT:
 	    return 4;
 	case GREATER_THAN_OR_EQUAL_TO:
 	case GREATER_THAN:
@@ -33,24 +35,14 @@ Mexpr_operator_precedence(int token_code){
 	case BRACKET_START:
 	case BRACKET_END:
 	    return 0;
+	default:
+	    break;
     }
 
     assert(0);
 
     return 0;
 }
-
-/*
-static bool
-Math_is_operand(int opcode){
-    return true;
-}
-
-static bool
-Math_is_operator(int opcode){
-    return true;
-}
-*/
 
 char *
 Mexpr_get_string_token(int token_code){
@@ -83,6 +75,10 @@ Mexpr_get_string_token(int token_code){
 	    return "MIN";
 	case MAX:
 	    return "MAX";
+	case SQR:
+	    return "SQR";
+	case SQRT:
+	    return "SQRT";
 	case SIN:
 	    return "SIN";
 	case COS:
@@ -108,6 +104,8 @@ Mexpr_get_string_token(int token_code){
 	case PARSER_EOF:
 	    return "PARSER_EOF";
 	default:
-	    return "NA";
+	    break;
     }
+
+    assert(0);
 }

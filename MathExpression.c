@@ -5,43 +5,33 @@
 #include "MexprEnums.h"
 
 /*
- * The grammer to parse mathmatical expression:
+ * The production rules for math expression that avoid left recursion :
  *
- * E -> E + T | E - T | T
- * T -> T * F | T / F | F
- * F -> INTEGER | DOUBLE | VAR | '(' E ')'
+ * E  ->  T E'
+ * E' ->  + T E' | - T E' | $
+ * T  ->  F T'
+ * T' ->  * F T' | / F T' | $
+ * F  ->  INT | DOUBLE | VAR | ( E ) | G ( E , E ) | P ( E )
+ * Q  ->  E I E
+ * I  ->  = | != | < | > | <= | >=
+ * P  ->  SIN | COS | SQRT
+ * G  ->  MAX | MIN | POW
  *
- * But, the first two rules contain left recursion,
- * which can't be written as it is. Therefore,
- * redefine them with some technique to avoid
- * the coding problem as below.
+ * Dollar sign means empty.
  *
- * 1. E  -> T E'
- * 2. E' -> + T E' | - T E' | $
- * 3. T  -> F T'
- * 4. T' -> * F T' | / F T' | $
- * 5. F  -> INTEGER | DOUBLE | VAR | ( E )
- * where $ means empty.
- *
- * Also, define (in)equality operators as grammer:
- *
- * Q    -> E INEQ E
- * INEQ -> = | != | < | > | <= | >=
- *
+ * With regard to the rule which contains dollar sign, the function for
+ * the non-terminal symbol must never return error. It should always
+ * return success. The way to implement dollar sign is simply return success.
  */
 static bool E_dash(void);
 static bool T(void);
 static bool T_dash(void);
 static bool F(void);
-static bool INEQ(void);
+static bool I(void);
+static bool P(void);
+static bool G(void);
 
-/*
- * With regard to any rule which contains dollar sign, the function for
- * the non-terminal symbol must never return error. It should always
- * return success. The way to implement dollar sign is simply return success.
- */
-
-/* 1. E  -> T E' */
+/* E  -> T E' */
 static bool
 E(void){
     int CKP;
@@ -61,7 +51,7 @@ E(void){
     return true;
 }
 
-/* 2. E' -> + T E' | - T E' | $ */
+/* E' -> + T E' | - T E' | $ */
 static bool
 E_dash(void){
     int token_code, CKP;
@@ -105,7 +95,7 @@ E_dash(void){
     return true;
 }
 
-/* 3. T  -> F T' */
+/* T  -> F T' */
 static bool
 T(void){
     int CKP;
@@ -125,7 +115,7 @@ T(void){
     return true;
 }
 
-/* 4. T' -> * F T' | / F T' | $ */
+/* T' -> * F T' | / F T' | $ */
 static bool
 T_dash(void){
     int token_code, CKP;
@@ -171,14 +161,14 @@ T_dash(void){
     return true;
 }
 
-/* 5. F -> INTEGER | DOUBLE | VAR | '(' E ')' */
+/* F -> INT | DOUBLE | VAR | ( E ) | G ( E , E ) | P ( E ) */
 static bool
 F(void){
     int token_code, CKP;
 
     CHECKPOINT(CKP);
 
-    /* F -> '(' E ')' */
+    /* F -> ( E ) */
     do {
 	if ((token_code = cyylex()) != BRACKET_START)
 	    break;
@@ -204,8 +194,54 @@ F(void){
 	    case VARIABLE:
 		return true;
 	    default:
-		return false;
+		break;
 	}
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    /* F -> P ( E ) */
+    do {
+	if (P() == false)
+	    break;
+
+	if ((token_code = cyylex()) != BRACKET_START)
+	    break;
+
+	if (E() == false)
+	    break;
+
+	if ((token_code = cyylex()) != BRACKET_END)
+	    break;
+
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    /* F -> G ( E , E ) */
+    do {
+	if (G() == false)
+	    break;
+
+	if ((token_code = cyylex()) != BRACKET_START)
+	    break;
+
+	if (E() == false)
+	    break;
+
+	if ((token_code = cyylex()) != COMMA)
+	    break;
+
+	if (E() == false)
+	    break;
+
+	if ((token_code = cyylex()) != BRACKET_END)
+	    break;
+
+	return true;
+
     } while(0);
 
     RESTORE_CHECKPOINT(CKP);
@@ -224,7 +260,7 @@ Q(void){
 	return false;
     }
 
-    if (INEQ() == false){
+    if (I() == false){
 	RESTORE_CHECKPOINT(CKP);
 	return false;
     }
@@ -238,18 +274,18 @@ Q(void){
 }
 
 static bool
-INEQ(void){
+I(void){
     int token_code, CKP;
 
     CHECKPOINT(CKP);
 
     token_code = cyylex();
     switch(token_code){
-	case NEQ:
 	case GREATER_THAN_OR_EQUAL_TO:
 	case GREATER_THAN:
 	case LESS_THAN_OR_EQUAL_TO:
 	case LESS_THAN:
+	case NEQ:
 	case EQ:
 	    return true;
 	default:{
@@ -257,6 +293,49 @@ INEQ(void){
 	    return false;
 	}
     }
+}
+
+static bool
+P(void){
+    int token_code, CKP;
+
+    CHECKPOINT(CKP);
+
+    token_code = cyylex();
+    switch(token_code){
+	case SIN:
+	case COS:
+	case SQR:
+	case SQRT:
+	    return true;
+	default:
+	    break;
+    }
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return false;
+}
+
+static bool
+G(void){
+    int token_code, CKP;
+
+    CHECKPOINT(CKP);
+
+    token_code = cyylex();
+    switch(token_code){
+	case MAX:
+	case MIN:
+	case POW:
+	    return true;
+	default:
+	    break;
+    }
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return false;
 }
 
 /*

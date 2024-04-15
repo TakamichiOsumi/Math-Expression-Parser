@@ -21,9 +21,12 @@ typedef enum Mexpr_Operators {
     /* Functions */
     MIN,
     MAX,
+    POW,
+
     SIN,
     COS,
-    POW,
+    SQR,
+    SQRT,
 
     /* INEQ operators */
     GREATER_THAN_OR_EQUAL_TO,

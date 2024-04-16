@@ -1,6 +1,3 @@
 [submodule "Stack"]
 	path = Stack
 	url = https://github.com/TakamichiOsumi/Stack.git
-[submodule "TCP-Server-Library"]
-	path = TCP-Server-Library
-	url = git@github.com:TakamichiOsumi/TCP-Server-Library.git

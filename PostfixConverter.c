@@ -113,7 +113,7 @@ print_postfix_list(linked_list *postfix){
 linked_list *
 convert_infix_to_postfix(lex_data *infix, int size_in){
     linked_list *postfix_array;
-    lex_data *curr, *top;
+    lex_data *curr;
     stack *s;
     int iter;
 
@@ -136,36 +136,27 @@ convert_infix_to_postfix(lex_data *infix, int size_in){
 	    handle_operator(s, postfix_array, curr);
 	}else if (curr->token_code == BRACKET_END){
 	    while(!stack_is_empty(s) &&
-		  stack_top_token_code(s) != BRACKET_START){
-		top = (lex_data *) stack_pop(s);
-		ll_tail_insert(postfix_array, (void *) top);
-	    }
+		  stack_top_token_code(s) != BRACKET_START)
+		ll_tail_insert(postfix_array, stack_pop(s));
 
-	    /* The next token must be BRACKET_START */
-	    top = stack_pop(s);
-	    assert(top->token_code == BRACKET_START);
+	    (void) stack_pop(s);
 
 	    while(!stack_is_empty(s)){
 		if (is_unary_operator(stack_top_token_code(s))){
-		    top = stack_pop(s);
-		    ll_tail_insert(postfix_array, (void *) top);
+		    ll_tail_insert(postfix_array, (void *) stack_pop(s));
 		    continue;
 		}
 		break;
 	    }
 	}else if (curr->token_code == COMMA){
 	    while(!stack_is_empty(s) &&
-		  stack_top_token_code(s) != BRACKET_START){
-		top = stack_pop(s);
-		ll_tail_insert(postfix_array, (void *) top);
-	    }
+		  stack_top_token_code(s) != BRACKET_START)
+		ll_tail_insert(postfix_array, (void *) stack_pop(s));
 	}
     }
 
-    while(!stack_is_empty(s)){
-	curr = (lex_data *) stack_pop(s);
-	ll_tail_insert(postfix_array, (void *) curr);
-    }
+    while(!stack_is_empty(s))
+	ll_tail_insert(postfix_array, (void *) stack_pop(s));
 
     print_postfix_list(postfix_array);
 

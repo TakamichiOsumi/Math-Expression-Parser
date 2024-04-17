@@ -1,11 +1,13 @@
 CC	= gcc
 CFLAGS	= -Wall -O0
 
-SUBDIR_stack	= Stack
-SUBDIRS	= $(SUBDIR_stack)
+SUBDIR_STACK	= Stack
+SUBDIR_LIST	= Linked-List
+SUBDIRS	= $(SUBDIR_STACK) $(SUBDIR_LIST)
 
-LIB_stack	= -L $(CURDIR)/$(SUBDIR_stack)
-LIBS	= -ll -lstack
+LIB_STACK	= -L $(CURDIR)/$(SUBDIR_STACK)
+LIB_LIST	= -L $(CURDIR)/$(SUBDIR_LIST)
+LIBS	= -ll -lstack -llinked_list
 
 MATH_PARSER	= exec_math_parser
 
@@ -25,7 +27,7 @@ $(OBJ_SYSTEM_COMPONENTS): libraries
 	for src in $(SYSTEM_COMPONENTS); do $(CC) $(CFLAGS) $$src -c; done
 
 $(MATH_PARSER): $(OBJ_SYSTEM_COMPONENTS)
-	$(CC) $(LIB_stack) $(LIBS) -g lex.yy.o $^ -o $@
+	$(CC) $(LIB_STACK) $(LIB_LIST) $(LIBS) -g lex.yy.o $^ -o $@
 
 .phony: clean test
 

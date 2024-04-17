@@ -15,10 +15,6 @@ lex_set_scan_buffer(const char *buffer){
     yy_scan_string(buffer);
 }
 
-extern lex_data *
-convert_infix_to_postfix(lex_data *infix,
-                         int size_in, int *size_out);
-
 static void
 print_lex_data_in_stack(lex_data data, char *prefix, int index){
     if (STRING_IS_NEWLINE(data.token_val)){
@@ -291,8 +287,7 @@ parser_test(parser_func parser,
 	lex_set_scan_buffer(lex_buffer);
 
 	if (parser() == expected_result){
-	    lex_data *postfix_stack;
-	    int postfix_stack_size;
+	    linked_list *postfix_array;
 
 	    printf("expected parsing '%s' to return %s and it did\n",
 		   tested[iter],
@@ -303,9 +298,8 @@ parser_test(parser_func parser,
 	     * arithmetic cases
 	     */
 	    if (parser == start_mathexpr_parse && expected_result == true){
-		postfix_stack = convert_infix_to_postfix(lstack.main_data,
-							 lstack.stack_pointer,
-							 &postfix_stack_size);
+		postfix_array = convert_infix_to_postfix(lstack.main_data,
+							 lstack.stack_pointer);
 	    }
 
 	}else{
@@ -322,9 +316,8 @@ parser_test(parser_func parser,
     }
 }
 
-extern lex_data *convert_infix_to_postfix(lex_data *infix,
-					  int size_in,
-					  int *size_out);
+extern linked_list *convert_infix_to_postfix(lex_data *infix,
+					     int size_in);
 
 int
 main(int argc, char **argv){

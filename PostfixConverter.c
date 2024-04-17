@@ -16,64 +16,14 @@ stack_top_token_code(stack *s){
     return top->token_code;
 }
 
-static bool
-is_skipped_token(token_code){
-    return (token_code == WHITE_SPACE || token_code == TAB ||
-	    token_code == PARSER_EOF);
-}
-
-static bool
-is_operand(token_code){
-    return (token_code == VARIABLE || token_code == INT ||
-	    token_code == DOUBLE);
-}
-
-static bool
-is_operator(token_code){
-    switch(token_code){
-	case PLUS:
-	case MINUS:
-	case MULTIPLY:
-	case DIVIDE:
-	case REMAINDER:
-	case MAX:
-	case MIN:
-	case POW:
-	case SIN:
-	case COS:
-	case SQR:
-	case SQRT:
-	    return true;
-	default:
-	    return false;
-    }
-}
-
-static bool
-is_unary_operator(token_code){
-    switch(token_code){
-	case SIN:
-	case COS:
-	case SQR:
-	case SQRT:
-	    return true;
-	default:
-	    return false;
-    }
-}
-
 static void
 handle_operator(stack *s, linked_list *postfix_array,
 		lex_data *current){
-    lex_data *top;
-
     while(!stack_is_empty(s) &&
 	  !is_unary_operator(current->token_code) &&
 	  (Mexpr_operator_precedence(current->token_code) <=
-	   Mexpr_operator_precedence(stack_top_token_code(s)))){
-	top = (lex_data *) stack_pop(s);
-	ll_tail_insert(postfix_array, (void *) top);
-    }
+	   Mexpr_operator_precedence(stack_top_token_code(s))))
+	ll_tail_insert(postfix_array, stack_pop(s));
 
     stack_push(s, current);
 }

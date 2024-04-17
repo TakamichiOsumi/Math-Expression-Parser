@@ -109,3 +109,49 @@ Mexpr_get_string_token(int token_code){
 
     assert(0);
 }
+
+bool
+is_skipped_token(int token_code){
+    return (token_code == WHITE_SPACE || token_code == TAB ||
+	    token_code == PARSER_EOF);
+}
+
+bool
+is_operand(int token_code){
+    return (token_code == VARIABLE || token_code == INT ||
+	    token_code == DOUBLE);
+}
+
+bool
+is_operator(int token_code){
+    switch(token_code){
+	case PLUS:
+	case MINUS:
+	case MULTIPLY:
+	case DIVIDE:
+	case REMAINDER:
+	case MAX:
+	case MIN:
+	case POW:
+	case SIN:
+	case COS:
+	case SQR:
+	case SQRT:
+	    return true;
+	default:
+	    return false;
+    }
+}
+
+bool
+is_unary_operator(int token_code){
+    switch(token_code){
+	case SIN:
+	case COS:
+	case SQR:
+	case SQRT:
+	    return true;
+	default:
+	    return false;
+    }
+}

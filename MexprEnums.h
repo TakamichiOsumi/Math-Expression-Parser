@@ -6,7 +6,6 @@ typedef enum mexpr_operator {
 
     MIN_OPERATOR,
 
-    /* Symbols */
     BRACKET_START,
     BRACKET_END,
     COMMA,
@@ -64,5 +63,9 @@ typedef enum mexpr_data_type {
 
 char *Mexpr_get_string_token(int token_code);
 int Mexpr_operator_precedence(int token_code);
+bool is_skipped_token(int token_code);
+bool is_operand(int token_code);
+bool is_operator(int token_code);
+bool is_unary_operator(int token_code);
 
 #endif

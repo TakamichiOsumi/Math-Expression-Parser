@@ -1,36 +1,40 @@
 #ifndef __MEXPR_ENUMS_
 #define __MEXPR_ENUMS_
 
-typedef enum mexpr_operator {
+typedef enum whitespace_symbol {
     INVALID = 0,
+    WHITE_SPACE,
+    TAB,
+    PARSER_EOF,
+} non_operator;
 
-    MIN_OPERATOR,
-
-    BRACKET_START,
+typedef enum punctuation_marker {
+    BRACKET_START = PARSER_EOF + 1,
     BRACKET_END,
     COMMA,
+} punctuation_marker;
 
-    /* Arithmetic */
-    PLUS,
+typedef enum operator {
+    /* Binary operator */
+    PLUS = COMMA + 1,
     MINUS,
     MULTIPLY,
     DIVIDE,
     REMAINDER,
-
-    /* Functions */
     MIN,
     MAX,
     POW,
 
+    /* Unary operator */
     SIN,
     COS,
     SQR,
     SQRT,
 
-    /* Inequality operators */
+    /* Inequality operator */
     GREATER_THAN_OR_EQUAL_TO,
-    GREATER_THAN,
     LESS_THAN_OR_EQUAL_TO,
+    GREATER_THAN,
     LESS_THAN,
     NEQ,
     EQ,
@@ -38,28 +42,13 @@ typedef enum mexpr_operator {
     /* TODO : Logical operators */
     /* OR, */
     /* AND, */
+} operator;
 
-    WHITE_SPACE,
-    TAB,
-    PARSER_EOF,
-
-    MAX_OPERATOR,
-} mexpr_operator;
-
-typedef enum mexpr_data_type {
-
-    INVALID_DATA_TYPE = MAX_OPERATOR + 1,
-
-    MIN_DATA_TYPE,
-
-    /* Basic types */
-    INT,
+typedef enum data_type {
+    INT = EQ + 1,
     DOUBLE,
     VARIABLE,
-
-    MAX_DATA_TYPE,
-
-} mexpr_data_type;
+} data_type;
 
 char *Mexpr_get_string_token(int token_code);
 int Mexpr_operator_precedence(int token_code);
@@ -67,5 +56,6 @@ bool is_skipped_token(int token_code);
 bool is_operand(int token_code);
 bool is_operator(int token_code);
 bool is_unary_operator(int token_code);
+bool is_binary_operator(int token_code);
 
 #endif

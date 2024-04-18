@@ -155,3 +155,20 @@ is_unary_operator(int token_code){
 	    return false;
     }
 }
+
+bool
+is_binary_operator(int token_code){
+    switch(token_code){
+	case PLUS:
+	case MINUS:
+	case MULTIPLY:
+	case DIVIDE:
+	case REMAINDER:
+	case MIN:
+	case MAX:
+	case POW:
+	    return true;
+	default:
+	    return false;
+    }
+}

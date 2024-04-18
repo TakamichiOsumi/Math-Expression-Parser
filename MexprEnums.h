@@ -1,6 +1,10 @@
 #ifndef __MEXPR_ENUMS_
 #define __MEXPR_ENUMS_
 
+/*
+ * List up all token enums without overlapping
+ * with each other value.
+ */
 typedef enum whitespace_symbol {
     INVALID = 0,
     WHITE_SPACE,

@@ -49,18 +49,24 @@ Mexpr_get_string_token(int token_code){
     switch(token_code){
 	case INVALID:
 	    return "INVALID";
-	case INT:
-	    return "INT";
-	case DOUBLE:
-	    return "DOUBLE";
-	case VARIABLE:
-	    return "VARIABLE";
+
+	    /* Whitespace symbol */
+	case WHITE_SPACE:
+	    return "SPACE";
+	case TAB:
+	    return "TAB";
+	case PARSER_EOF:
+	    return "PARSER_EOF";
+
+	    /* Punctuation marker */
 	case BRACKET_START:
 	    return "BRACKET_START";
 	case BRACKET_END:
 	    return "BRACKET_END";
 	case COMMA:
 	    return "COMMA";
+
+	    /* Binary operator */
 	case PLUS:
 	    return "PLUS";
 	case MINUS:
@@ -75,6 +81,10 @@ Mexpr_get_string_token(int token_code){
 	    return "MIN";
 	case MAX:
 	    return "MAX";
+	case POW:
+	    return "POW";
+
+	    /* Unary operator */
 	case SQR:
 	    return "SQR";
 	case SQRT:
@@ -83,26 +93,29 @@ Mexpr_get_string_token(int token_code){
 	    return "SIN";
 	case COS:
 	    return "COS";
-	case POW:
-	    return "POW";
+
+	    /* Inequality operator */
 	case GREATER_THAN_OR_EQUAL_TO:
 	    return "GREATER_THAN_OR_EQUAL_TO";
-	case GREATER_THAN:
-	    return "GREATER_THAN";
 	case LESS_THAN_OR_EQUAL_TO:
 	    return "LESS_THAN_OR_EQUAL_TO";
+	case GREATER_THAN:
+	    return "GREATER_THAN";
 	case LESS_THAN:
 	    return "LESS_THAN";
 	case NEQ:
 	    return "NEQ";
 	case EQ:
-	    return "MATH_EQ";
-	case WHITE_SPACE:
-	    return "SPACE";
-	case TAB:
-	    return "TAB";
-	case PARSER_EOF:
-	    return "PARSER_EOF";
+	    return "EQ";
+
+	    /* Data type */
+	case INT:
+	    return "INT";
+	case DOUBLE:
+	    return "DOUBLE";
+	case VARIABLE:
+	    return "VARIABLE";
+
 	default:
 	    break;
     }

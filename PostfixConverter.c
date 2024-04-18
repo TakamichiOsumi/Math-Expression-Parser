@@ -21,8 +21,8 @@ handle_operator(stack *s, linked_list *postfix_array,
 		lex_data *current){
     while(!stack_is_empty(s) &&
 	  !is_unary_operator(current->token_code) &&
-	  (Mexpr_operator_precedence(current->token_code) <=
-	   Mexpr_operator_precedence(stack_top_token_code(s))))
+	  (operator_precedence(current->token_code) <=
+	   operator_precedence(stack_top_token_code(s))))
 	ll_tail_insert(postfix_array, stack_pop(s));
 
     stack_push(s, current);

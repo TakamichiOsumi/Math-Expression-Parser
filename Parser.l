@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "ExportedParser.h"
 #include "PostfixConverter.h"
+#include "MexprTree.h"
 
 lex_stack lstack = { INVALID, { 0, 0, NULL} };
 char lex_buffer[BUFFER_LEN];
@@ -20,13 +21,13 @@ print_lex_data_in_stack(lex_data data, char *prefix, int index){
     if (STRING_IS_NEWLINE(data.token_val)){
 	printf("%s : token = '\n' whose code is '%s' at index = %d\n",
 	       prefix,
-	       Mexpr_get_string_token(data.token_code),
+	       get_string_token(data.token_code),
 	       index);
     }else{
 	printf("%s : token = '%s' whose code is '%s' at index = %d\n",
 	       prefix,
 	       data.token_val,
-	       Mexpr_get_string_token(data.token_code),
+	       get_string_token(data.token_code),
 	       index);
     }
 }
@@ -248,7 +249,7 @@ extern void parse_equations();
 extern void start_sql_parse();
 extern bool start_mathexpr_parse();
 extern bool start_ineq_mathexpr_parse();
-
+tree* convert_postfix_to_tree(linked_list *postfix_array);
 typedef bool (*parser_func)(void);
 
 /*
@@ -298,8 +299,11 @@ parser_test(parser_func parser,
 	     * arithmetic cases
 	     */
 	    if (parser == start_mathexpr_parse && expected_result == true){
+		tree *t;
+
 		postfix_array = convert_infix_to_postfix(lstack.main_data,
 							 lstack.stack_pointer);
+		t = convert_postfix_to_tree(postfix_array);
 	    }
 
 	}else{

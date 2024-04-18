@@ -1,6 +1,8 @@
 #ifndef __MEXPR_ENUMS_
 #define __MEXPR_ENUMS_
 
+#include <stdbool.h>
+
 /*
  * List up all token enums without overlapping
  * with each other value.
@@ -54,8 +56,8 @@ typedef enum data_type {
     VARIABLE,
 } data_type;
 
-char *Mexpr_get_string_token(int token_code);
-int Mexpr_operator_precedence(int token_code);
+char *get_string_token(int token_code);
+int operator_precedence(int token_code);
 bool is_skipped_token(int token_code);
 bool is_operand(int token_code);
 bool is_operator(int token_code);

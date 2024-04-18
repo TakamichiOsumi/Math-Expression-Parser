@@ -11,8 +11,8 @@ LIBS	= -ll -lstack -llinked_list
 
 MATH_PARSER	= exec_math_parser
 
-SYSTEM_COMPONENTS	= MexprEnums.c MathExpression.c PostfixConverter.c
-OBJ_SYSTEM_COMPONENTS	= MexprEnums.o MathExpression.o PostfixConverter.o
+SYSTEM_COMPONENTS	= MexprEnums.c MathExpression.c PostfixConverter.c MexprTree.c
+OBJ_SYSTEM_COMPONENTS	= MexprEnums.o MathExpression.o PostfixConverter.o MexprTree.o
 
 all: libraries lex.yy.o $(MATH_PARSER)
 

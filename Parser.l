@@ -314,7 +314,7 @@ parser_test(parser_func parser,
 
 static void
 converter_test(parser_func parser, char *tested, char **answer, int answer_length){
-    int j;
+    int i;
     linked_list *postfix_array;
     node *lln;
     lex_data *curr;
@@ -336,12 +336,12 @@ converter_test(parser_func parser, char *tested, char **answer, int answer_lengt
 					     lstack.stack_pointer);
     assert(ll_get_length(postfix_array) == answer_length);
 
-    for (j = 0; j < answer_length; j++){
+    for (i = 0; i < answer_length; i++){
 	lln = ll_get_first_node(postfix_array);
 	curr = (lex_data *) lln->data;
-	if (strncmp(curr->token_val, answer[j], strlen(answer[j])) != 0){
+	if (strncmp(curr->token_val, answer[i], strlen(answer[i])) != 0){
 	    printf("index = %d : expected the postfix string = %s, but it was = %s\n",
-		   j, answer[j], curr->token_val);
+		   i, answer[i], curr->token_val);
 	    exit(-1);
 	}
     }

@@ -245,8 +245,22 @@ yyrewind(int n){
     yy_scan_string(next_parse_pos);
 }
 
-extern void parse_equations();
-extern void start_sql_parse();
+/*
+ * Input string must end with a new line '\n'.
+ */
+static void
+test_format_check(char *s){
+    char last_char;
+
+    if (strlen(s) > 2){
+	last_char = s[strlen(s) - 1];
+	if (last_char != '\n'){
+	    printf("invalid string format : '%s'\n", s);
+	    exit(-1);
+	}
+    }
+}
+
 extern bool start_mathexpr_parse();
 extern bool start_ineq_mathexpr_parse();
 tree* convert_postfix_to_tree(linked_list *postfix_array);
@@ -274,38 +288,16 @@ parser_test(parser_func parser,
 	memset(lex_buffer, '\0', BUFFER_LEN);
 
 	/* Pretest format check */
-	if (strlen(tested[iter]) > 2){
-	    last_char = tested[iter][strlen(tested[iter]) - 1];
-	    if (last_char != '\n'){
-		printf("invalid string format : '%s'\n",
-		       tested[iter]);
-		exit(-1);
-	    }
-	}
+	test_format_check(tested[iter]);
 
 	/* Copy the test string to the buffer */
 	strncpy(lex_buffer, tested[iter], strlen(tested[iter]));
 	lex_set_scan_buffer(lex_buffer);
 
 	if (parser() == expected_result){
-	    linked_list *postfix_array;
-
 	    printf("expected parsing '%s' to return %s and it did\n",
 		   tested[iter],
 		   expected_result ? "true" : "false");
-
-	    /*
-	     * Execute postfix conversion only for successful
-	     * arithmetic cases
-	     */
-	    if (parser == start_mathexpr_parse && expected_result == true){
-		tree *t;
-
-		postfix_array = convert_infix_to_postfix(lstack.main_data,
-							 lstack.stack_pointer);
-		t = convert_postfix_to_tree(postfix_array);
-	    }
-
 	}else{
 	    printf("'%s' was not parsed expectedly, it was not '%s'\n",
 		   tested[iter],
@@ -319,6 +311,43 @@ parser_test(parser_func parser,
 	iter++;
     }
 }
+
+static void
+converter_test(parser_func parser, char *tested, char **answer, int answer_length){
+    int j;
+    linked_list *postfix_array;
+    node *lln;
+    lex_data *curr;
+
+    /* Clean up */
+    parser_stack_reset();
+
+    /* Pretest format check */
+    test_format_check(tested);
+
+    /* Copy the test string to the buffer */
+    memset(lex_buffer, '\0', BUFFER_LEN);
+    strncpy(lex_buffer, tested, strlen(tested));
+    lex_set_scan_buffer(lex_buffer);
+
+    assert(parser() == true);
+
+    postfix_array = convert_infix_to_postfix(lstack.main_data,
+					     lstack.stack_pointer);
+    assert(ll_get_length(postfix_array) == answer_length);
+
+    for (j = 0; j < answer_length; j++){
+	lln = ll_get_first_node(postfix_array);
+	curr = (lex_data *) lln->data;
+	if (strncmp(curr->token_val, answer[j], strlen(answer[j])) != 0){
+	    printf("index = %d : expected the postfix string = %s, but it was = %s\n",
+		   j, answer[j], curr->token_val);
+	    exit(-1);
+	}
+    }
+    /* t = convert_postfix_to_tree(postfix_array); */
+}
+
 
 extern linked_list *convert_infix_to_postfix(lex_data *infix,
 					     int size_in);
@@ -408,14 +437,24 @@ main(int argc, char **argv){
 	NULL,
     };
 
-    parser_test(start_mathexpr_parse,
-		success, true);
-    parser_test(start_mathexpr_parse,
-		failure, false);
-    parser_test(start_ineq_mathexpr_parse,
-		ineq_success, true);
-    parser_test(start_ineq_mathexpr_parse,
-		ineq_failure, false);
+    char *conversion_test1 = "max(a, b)\n",
+	*conversion_test2 = "a + sqr(b) * sqrt(c) + pow(d, e)\n",
+	*conversion_test3 = "((-1 * b) + sqrt(sqr(b) - 4 * a * c)) / (2 * a)\n";
+
+    char *answer1[BUFFER_LEN] = { "a", "b", "max" },
+	*answer2[BUFFER_LEN] = { "a", "b", "sqr", "c", "sqrt",
+				 "*", "+", "d", "e", "pow", "+" },
+	*answer3[BUFFER_LEN] = { "-1", "b", "*", "b", "sqr", "4", "a",
+				 "*", "c", "*", "-", "sqrt", "+", "2", "a", "*", "/" };
+
+    parser_test(start_mathexpr_parse, success, true);
+    parser_test(start_mathexpr_parse, failure, false);
+    parser_test(start_ineq_mathexpr_parse, ineq_success, true);
+    parser_test(start_ineq_mathexpr_parse, ineq_failure, false);
+
+    converter_test(start_mathexpr_parse, conversion_test1, answer1, 3);
+    converter_test(start_mathexpr_parse, conversion_test2, answer2, 11);
+    converter_test(start_mathexpr_parse, conversion_test3, answer3, 17);
 
     printf("All tests are done gracefully\n");
 

@@ -16,18 +16,6 @@ stack_top_token_code(stack *s){
     return top->token_code;
 }
 
-static void
-handle_operator(stack *s, linked_list *postfix_array,
-		lex_data *current){
-    while(!stack_is_empty(s) &&
-	  !is_unary_operator(current->token_code) &&
-	  (operator_precedence(current->token_code) <=
-	   operator_precedence(stack_top_token_code(s))))
-	ll_tail_insert(postfix_array, stack_pop(s));
-
-    stack_push(s, current);
-}
-
 /* for debug */
 static void
 print_infix_lex_data(lex_data *infix, int size_in){
@@ -83,7 +71,13 @@ convert_infix_to_postfix(lex_data *infix, int size_in){
 	}else if (curr->token_code == BRACKET_START){
 	    stack_push(s, curr);
 	}else if (is_operator(curr->token_code)){
-	    handle_operator(s, postfix_array, curr);
+	    while(!stack_is_empty(s) &&
+		  !is_unary_operator(curr->token_code) &&
+		  (operator_precedence(curr->token_code) <=
+		   operator_precedence(stack_top_token_code(s))))
+		ll_tail_insert(postfix_array, stack_pop(s));
+
+	    stack_push(s, curr);
 	}else if (curr->token_code == BRACKET_END){
 	    while(!stack_is_empty(s) &&
 		  stack_top_token_code(s) != BRACKET_START)

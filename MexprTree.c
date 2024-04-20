@@ -528,8 +528,7 @@ evaluate_node(tr_node *self){
 				result->unv.ival = left->unv.ival % right->unv.ival;
 				break;
 			    case DOUBLE:
-				result->node_id = DOUBLE;
-				result->unv.dval = left->unv.ival % right->unv.dval;
+				/* Evaluation failure. Report an error */
 				break;
 			    case VARIABLE:
 				assert(0);
@@ -542,12 +541,10 @@ evaluate_node(tr_node *self){
 		    case DOUBLE:
 			switch(right->node_id){
 			    case INT:
-				result->node_id = DOUBLE;
-				result->unv.dval = left->unv.dval % right->unv.ival;
+				/* Evaluation Failure. Report an error */
 				break;
 			    case DOUBLE:
-				result->node_id = DOUBLE;
-				result->unv.dval = left->unv.dval % right->unv.dval;
+				/* Evaluation Failure. Report an error */
 				break;
 			    case VARIABLE:
 				assert(0);

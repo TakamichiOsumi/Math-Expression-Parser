@@ -389,14 +389,11 @@ start_mathexpr_parse(){
     parse_result = E();
 
     if ((token_code = cyylex()) != PARSER_EOF){
-	printf("* Rejected\n");
 	return false;
     }else{
 	if (!parse_result){
-	    printf("* Rejected\n");
 	    return false;
 	}else{
-	    printf("* Accepcted\n");
 	    return true;
 	}
     }
@@ -413,14 +410,11 @@ start_ineq_mathexpr_parse(){
     parse_result = Q();
 
     if ((token_code = cyylex()) != PARSER_EOF){
-	printf("* Rejected\n");
 	return false;
     }else{
 	if (!parse_result){
-	    printf("* Rejected\n");
 	    return false;
 	}else{
-	    printf("* Accepcted\n");
 	    return true;
 	}
     }

@@ -295,17 +295,9 @@ parser_test(parser_func parser,
 	strncpy(lex_buffer, tested[iter], strlen(tested[iter]));
 	lex_set_scan_buffer(lex_buffer);
 
-	if (parser() == expected_result){
-	    printf("expected parsing '%s' to return %s and it did\n",
-		   tested[iter],
-		   expected_result ? "true" : "false");
-	}else{
-	    printf("'%s' was not parsed expectedly, it was not '%s'\n",
-		   tested[iter],
-		   expected_result ? "Accepted" : "Rejected");
+	/* Parse the string */
+	assert(parser() == expected_result);
 
-	    exit(-1);
-	}
 	/* debug_print(); */
 
 	/* Move to the next string */

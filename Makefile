@@ -36,4 +36,4 @@ clean:
 	for dir in $(SUBDIRS); do cd $$dir; make clean; cd ..; done
 
 test: lex.yy.o $(MATH_PARSER)
-	@./$(MATH_PARSER) &> /dev/null && echo "Success if the return value is zero >>> $$?"
+	@./$(MATH_PARSER) &> /dev/null && echo "Success when the return value is zero >>> $$?"

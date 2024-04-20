@@ -43,7 +43,7 @@ lex_push(lex_data data){
 	return;
     }
 
-    print_lex_data_in_stack(data, "\tPush", lstack.stack_pointer - 1);
+    /* print_lex_data_in_stack(data, "\tPush", lstack.stack_pointer - 1); */
 
     lstack.main_data[lstack.stack_pointer++] = data;
 }
@@ -55,9 +55,10 @@ lex_pop(){
 
     assert(lstack.stack_pointer >= 0);
 
+    /*
     print_lex_data_in_stack(lstack.main_data[lstack.stack_pointer - 1],
                             "\tPop ",
-                            lstack.stack_pointer - 1);
+                            lstack.stack_pointer - 1); */
 
     lstack.stack_pointer--;
 
@@ -305,7 +306,7 @@ parser_test(parser_func parser,
 
 	    exit(-1);
 	}
-	debug_print();
+	/* debug_print(); */
 
 	/* Move to the next string */
 	iter++;

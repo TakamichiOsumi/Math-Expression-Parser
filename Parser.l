@@ -348,6 +348,35 @@ converter_test(parser_func parser, char *tested, char **answer, int answer_lengt
     /* t = convert_postfix_to_tree(postfix_array); */
 }
 
+extern void evaluate_tree(tree *t);
+
+static void
+evaluation_test(parser_func parser, char *tested){
+    linked_list *postfix_array;
+    node *lln;
+    lex_data *curr;
+    tree *t;
+
+    /* Clean up */
+    parser_stack_reset();
+
+    /* Pretest format check */
+    test_format_check(tested);
+
+    /* Copy the test string to the buffer */
+    memset(lex_buffer, '\0', BUFFER_LEN);
+    strncpy(lex_buffer, tested, strlen(tested));
+    lex_set_scan_buffer(lex_buffer);
+
+    /* Parse the string */
+    assert(parser() == true);
+    postfix_array = convert_infix_to_postfix(lstack.main_data,
+					     lstack.stack_pointer);
+
+    /* Convert the postfix array to tree and evaluate it */
+    t = convert_postfix_to_tree(postfix_array);
+    evaluate_tree(t);
+}
 
 extern linked_list *convert_infix_to_postfix(lex_data *infix,
 					     int size_in);
@@ -437,15 +466,28 @@ main(int argc, char **argv){
 	NULL,
     };
 
-    char *conversion_test1 = "max(a, b)\n",
+    char
+	*conversion_test1 = "max(a, b)\n",
 	*conversion_test2 = "a + sqr(b) * sqrt(c) + pow(d, e)\n",
 	*conversion_test3 = "((-1 * b) + sqrt(sqr(b) - 4 * a * c)) / (2 * a)\n";
 
-    char *answer1[BUFFER_LEN] = { "a", "b", "max" },
+    char
+	*answer1[BUFFER_LEN] = { "a", "b", "max" },
 	*answer2[BUFFER_LEN] = { "a", "b", "sqr", "c", "sqrt",
 				 "*", "+", "d", "e", "pow", "+" },
 	*answer3[BUFFER_LEN] = { "-1", "b", "*", "b", "sqr", "4", "a",
 				 "*", "c", "*", "-", "sqrt", "+", "2", "a", "*", "/" };
+    char
+	*eval_test1 = "max(1, 2)\n",
+	*eval_test2 = "5.0 + 10\n",
+	*eval_test3 = "10 + 5.0\n",
+	*eval_test4 = "1 - 2\n",
+	*eval_test5 = "10 - 2.0\n",
+	*eval_test6 = "min(-10, 1)\n",
+	*eval_test7 = "min(1, 10)\n",
+	*eval_test8 = "-5\n",
+	*eval_test9 = "sqrt(16)\n",
+	*eval_test10 = "sqr(10)\n";
 
     parser_test(start_mathexpr_parse, success, true);
     parser_test(start_mathexpr_parse, failure, false);
@@ -455,6 +497,17 @@ main(int argc, char **argv){
     converter_test(start_mathexpr_parse, conversion_test1, answer1, 3);
     converter_test(start_mathexpr_parse, conversion_test2, answer2, 11);
     converter_test(start_mathexpr_parse, conversion_test3, answer3, 17);
+
+    evaluation_test(start_mathexpr_parse, eval_test1);
+    evaluation_test(start_mathexpr_parse, eval_test2);
+    evaluation_test(start_mathexpr_parse, eval_test3);
+    evaluation_test(start_mathexpr_parse, eval_test4);
+    evaluation_test(start_mathexpr_parse, eval_test5);
+    evaluation_test(start_mathexpr_parse, eval_test6);
+    evaluation_test(start_mathexpr_parse, eval_test7);
+    evaluation_test(start_mathexpr_parse, eval_test8);
+    evaluation_test(start_mathexpr_parse, eval_test9);
+    evaluation_test(start_mathexpr_parse, eval_test10);
 
     printf("All tests are done gracefully\n");
 

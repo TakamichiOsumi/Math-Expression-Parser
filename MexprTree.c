@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +8,36 @@
 #include "Stack/stack.h"
 #include "ExportedParser.h"
 #include "MexprTree.h"
+
+/*
+ * To free all memory allocated during computation of tree,
+ * keep the tree as it is, and connect all the temporary
+ * computation results in a linked list.
+ *
+ * After the root node returns the final computation result,
+ * free the memory with free callback.
+ */
+static linked_list *ll_tmp_calc;
+
+tr_node *evaluate_node(tr_node *self);
+
+/* free callback */
+static void
+free_dynamic_calculated_node(void *p){
+    node *lln = (node *) p;
+    tr_node *n = (tr_node *) lln->data;
+
+    switch(n->node_id){
+	case INT:
+	    break;
+	case DOUBLE:
+	    break;
+	case VARIABLE:
+	    break;
+	default:
+	    assert(0);
+    }
+}
 
 static tree*
 gen_tree(void){
@@ -23,20 +54,30 @@ gen_tree(void){
     return t;
 }
 
-/*
- * The caller must pass each token processed by postfix converter.
- */
 static tr_node*
-gen_tr_node(lex_data *ld){
+gen_null_tr_node(void){
     tr_node *n;
 
-    if ((n = (tr_node *) malloc(sizeof(node))) == NULL){
+    if ((n = (tr_node *) malloc(sizeof(tr_node))) == NULL){
 	perror("malloc");
 	exit(-1);
     }
 
     n->parent = n->left = n->right
 	= n->list_left = n->list_right = NULL;
+
+    return n;
+}
+
+/*
+ * Expect the caller passes each token processed by postfix converter.
+ *
+ * Therefore, some of token types must be filtered. Raise an assertion
+ * failure if input of this function hits any type of them.
+ */
+static tr_node*
+gen_tr_node_from_lex_data(lex_data *ld){
+    tr_node *n = gen_null_tr_node();
 
     switch (ld->token_code){
 
@@ -114,42 +155,597 @@ convert_postfix_to_tree(linked_list *postfix_array){
     tr_node *trn;
     tree *t = gen_tree();
 
-    printf("--- <Convert postfix to tree> ---\n");
-
     ll_begin_iter(postfix_array);
     while((lln = ll_get_iter_node(postfix_array)) != NULL){
-
 	curr = (lex_data *) lln->data;
-	trn = gen_tr_node(curr);
-
+	trn = gen_tr_node_from_lex_data(curr);
 	if (is_operand(curr->token_code)){
-	    printf("push operand = '%s'\n",
-		   get_string_token(curr->token_code));
 	    stack_push(node_stack, (void *) trn);
 	}else if (is_unary_operator(curr->token_code)){
 	    trn->left = stack_pop(node_stack);
-	    printf("push unary operator = '%s' with its child = '%s'\n",
-		   get_string_token(trn->node_id),
-		   get_string_token(trn->left->node_id));
 	    stack_push(node_stack, (void *) trn);
 	}else if (is_binary_operator(curr->token_code)){
 	    trn->right = stack_pop(node_stack);
 	    trn->left = stack_pop(node_stack);
-	    printf("push binary operator = '%s' with its children (left : '%s', right '%s')\n",
-		   get_string_token(curr->token_code),
-		   get_string_token(trn->left->node_id),
-		   get_string_token(trn->right->node_id));
 	    stack_push(node_stack, (void *) trn);
 	}
     }
     ll_end_iter(postfix_array);
 
     assert((t->root = stack_pop(node_stack)) != NULL);
-    printf("root = '%s'\n", get_string_token(t->root->node_id));
-
-    printf("----------------------\n");
-
     stack_destroy(node_stack);
 
     return t;
+}
+
+void
+evaluate_tree(tree *t){
+    tr_node *result;
+
+    ll_tmp_calc = ll_init(NULL,
+			  free_dynamic_calculated_node);
+
+    result = evaluate_node(t->root);
+    switch(result->node_id){
+	case INT:
+	    printf("Calculation result = %d\n",
+		   result->unv.ival);
+	    break;
+	case DOUBLE:
+	    printf("Calculation result = %f\n",
+		   result->unv.dval);
+	    break;
+	case VARIABLE:
+	    printf("Calculation result = %s\n",
+		   result->unv.vval);
+	    break;
+	default:
+	    assert(0);
+	    break;
+    }
+
+    /*
+     * Free all computation results created during the
+     * evaluate_node().
+     */
+    ll_destroy(ll_tmp_calc);
+}
+
+/*
+ * Calculate VARIABLE type is not supported yet.
+ */
+tr_node *
+evaluate_node(tr_node *self){
+    tr_node *result, *left, *right;
+
+    /* Reach the leaf node ? */
+    if (self->left == NULL && self->right == NULL)
+	return self;
+
+    /* If not, execute the operator */
+    if (is_unary_operator(self->node_id)){
+
+	assert(self->left != NULL);
+	assert(self->right == NULL);
+
+	result = gen_null_tr_node();
+
+	/* Get the result of left node */
+	left = evaluate_node(self->left);
+
+	switch(left->node_id){
+	    case INT:
+		switch(self->node_id){
+		    case SIN:
+			result->node_id = DOUBLE;
+			result->unv.dval = sin(left->unv.ival);
+			break;
+		    case COS:
+			result->node_id = DOUBLE;
+			result->unv.dval = cos(left->unv.ival);
+			break;
+		    case SQR:
+			result->node_id = INT;
+			result->unv.ival = left->unv.ival * left->unv.ival;
+			break;
+		    case SQRT:
+			result->node_id = DOUBLE;
+			result->unv.dval = sqrt(left->unv.ival);
+			break;
+		    default:
+			assert(0);
+			return NULL;
+		}
+		break;
+	    case DOUBLE:
+		switch(self->node_id){
+		    case SIN:
+			result->node_id = DOUBLE;
+			result->unv.dval = sin(left->unv.dval);
+			break;
+		    case COS:
+			result->node_id = DOUBLE;
+			result->unv.dval = cos(left->unv.dval);
+			break;
+		    case SQR:
+			result->node_id = DOUBLE;
+			result->unv.dval = left->unv.dval * left->unv.dval;
+			break;
+		    case SQRT:
+			result->node_id = DOUBLE;
+			result->unv.dval = sqrt(left->unv.dval);
+			break;
+		    default:
+			assert(0);
+			return NULL;
+		}
+		break;
+	    case VARIABLE:
+		assert(0);
+		break;
+	    default:
+		assert(0);
+		return NULL;
+	}
+
+	/* Add this newly generated node to the list */
+	ll_insert(ll_tmp_calc, (void *) result);
+
+    }else if (is_binary_operator(self->node_id)){
+	assert(self->left != NULL);
+	assert(self->right != NULL);
+
+	result = gen_null_tr_node();
+	left = evaluate_node(self->left);
+	right = evaluate_node(self->right);
+
+	switch(self->node_id){
+	    case PLUS:
+		switch(left->node_id){
+		    case INT:
+			switch(right->node_id){
+			    case INT:
+				result->node_id = INT;
+				result->unv.ival = left->unv.ival + right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.ival + right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case DOUBLE:
+			switch(right->node_id){
+			    case INT:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.dval + right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.dval + right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case VARIABLE:
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    case MINUS:
+		switch(left->node_id){
+		    case INT:
+			switch(right->node_id){
+			    case INT:
+				result->node_id = INT;
+				result->unv.ival = left->unv.ival - right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.ival - right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case DOUBLE:
+			switch(right->node_id){
+			    case INT:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.dval - right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.dval - right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case VARIABLE:
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    default:
+			break;
+		}
+		break;
+	    case MULTIPLY:
+		switch(left->node_id){
+		    case INT:
+			switch(right->node_id){
+			    case INT:
+				result->node_id = INT;
+				result->unv.ival = left->unv.ival * right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.ival * right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case DOUBLE:
+			switch(right->node_id){
+			    case INT:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.dval * right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.dval * right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case VARIABLE:
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    case DIVIDE:
+		switch(left->node_id){
+		    case INT:
+			switch(right->node_id){
+			    case INT:
+				result->node_id = INT;
+				result->unv.ival = left->unv.ival / right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.ival / right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case DOUBLE:
+			switch(right->node_id){
+			    case INT:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.dval / right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.dval / right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case VARIABLE:
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    case REMAINDER:
+		switch(left->node_id){
+		    case INT:
+			switch(right->node_id){
+			    case INT:
+				result->node_id = INT;
+				result->unv.ival = left->unv.ival % right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.ival % right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case DOUBLE:
+			switch(right->node_id){
+			    case INT:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.dval % right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.dval % right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case VARIABLE:
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		assert(0);
+		break;
+	    case MIN:
+		switch(left->node_id){
+		    case INT:
+			switch(right->node_id){
+			    case INT:
+				result->node_id = INT;
+				result->unv.ival = left->unv.ival < right->unv.ival ?
+				    left->unv.ival : right->unv.ival;
+				break;
+			    case DOUBLE:
+				if (left->unv.ival < right->unv.dval){
+				    result->node_id = INT;
+				    result->unv.ival = left->unv.ival;
+				}else{
+				    result->node_id = DOUBLE;
+				    result->unv.dval = right->unv.dval;
+				}
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case DOUBLE:
+			switch(right->node_id){
+			    case INT:
+				if (left->unv.dval < right->unv.ival){
+				    result->node_id = DOUBLE;
+				    result->unv.dval = left->unv.dval;
+				}else{
+				    result->node_id = INT;
+				    result->unv.ival = right->unv.ival;
+				}
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.dval < right->unv.dval ?
+				    left->unv.dval : right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case VARIABLE:
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    case MAX:
+		switch(left->node_id){
+		    case INT:
+			switch(right->node_id){
+			    case INT:
+				result->node_id = INT;
+				result->unv.ival = left->unv.ival > right->unv.ival ?
+				    left->unv.ival : right->unv.ival;
+				break;
+			    case DOUBLE:
+				if (left->unv.ival > right->unv.dval){
+				    result->node_id = INT;
+				    result->unv.ival = left->unv.ival;
+				}else{
+				    result->node_id = DOUBLE;
+				    result->unv.dval = right->unv.dval;
+				}
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case DOUBLE:
+			switch(right->node_id){
+			    case INT:
+				if (left->unv.dval > right->unv.ival){
+				    result->node_id = DOUBLE;
+				    result->unv.dval = left->unv.dval;
+				}else{
+				    result->node_id = INT;
+				    result->unv.ival = right->unv.ival;
+				}
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = left->unv.dval > right->unv.dval ?
+				    left->unv.dval : right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case VARIABLE:
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    case POW:
+		switch(left->node_id){
+		    case INT:
+			break;
+		    case DOUBLE:
+			break;
+		    case VARIABLE:
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    default:
+		assert(0);
+		break;
+	}
+
+	/* Add this newly generated node to the list */
+	ll_insert(ll_tmp_calc, (void *) result);
+
+    }else{
+	/*
+	 * This is a branch, but this node does not have any operator.
+	 */
+	assert(0);
+    }
+
+    return result;
 }

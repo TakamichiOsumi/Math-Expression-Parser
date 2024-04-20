@@ -32,7 +32,7 @@ $(MATH_PARSER): $(OBJ_SYSTEM_COMPONENTS)
 .phony: clean test
 
 clean:
-	rm -rf *.o lex.yy.c
+	rm -rf *.o lex.yy.c $(MATH_PARSER)
 	for dir in $(SUBDIRS); do cd $$dir; make clean; cd ..; done
 
 test: lex.yy.o $(MATH_PARSER)

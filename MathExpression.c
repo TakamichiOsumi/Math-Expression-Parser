@@ -14,7 +14,7 @@
  *  F  ->  INT | DOUBLE | VAR | ( E ) | G ( E , E ) | P ( E )
  *  Q  ->  E I E
  *  I  ->  = | != | < | > | <= | >=
- *  P  ->  SIN | COS | SQRT
+ *  P  ->  SIN | COS | SQR | SQRT
  *  G  ->  MAX | MIN | POW
  *
  * Dollar sign means empty.

@@ -488,7 +488,10 @@ main(int argc, char **argv){
 	*eval_test7 = "min(1, 10)\n",
 	*eval_test8 = "-5\n",
 	*eval_test9 = "sqrt(16)\n",
-	*eval_test10 = "sqr(10)\n";
+	*eval_test10 = "sqr(10)\n",
+	*eval_test11 = "sqr(3) + min(10, 0) + sqrt(25.0)\n",
+	*eval_test12 = "25 % 7\n",
+	*eval_test13 = "100 / 2\n";
 
     parser_test(start_mathexpr_parse, success, true);
     parser_test(start_mathexpr_parse, failure, false);
@@ -509,6 +512,9 @@ main(int argc, char **argv){
     evaluation_test(start_mathexpr_parse, eval_test8);
     evaluation_test(start_mathexpr_parse, eval_test9);
     evaluation_test(start_mathexpr_parse, eval_test10);
+    evaluation_test(start_mathexpr_parse, eval_test11);
+    evaluation_test(start_mathexpr_parse, eval_test12);
+    evaluation_test(start_mathexpr_parse, eval_test13);
 
     printf("All tests are done gracefully\n");
 

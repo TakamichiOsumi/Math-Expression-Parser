@@ -213,6 +213,9 @@ evaluate_tree(tree *t){
 
 /*
  * Calculate VARIABLE type is not supported yet.
+ *
+ * Also, there needs to handle exit case, like
+ * zero division.
  */
 tr_node *
 evaluate_node(tr_node *self){
@@ -228,7 +231,9 @@ evaluate_node(tr_node *self){
 	assert(self->left != NULL);
 	assert(self->right == NULL);
 
+	/* Create node and add it to the list */
 	result = gen_null_tr_node();
+	ll_insert(ll_tmp_calc, (void *) result);
 
 	/* Get the result of left node */
 	left = evaluate_node(self->left);
@@ -287,10 +292,6 @@ evaluate_node(tr_node *self){
 		assert(0);
 		return NULL;
 	}
-
-	/* Add this newly generated node to the list */
-	ll_insert(ll_tmp_calc, (void *) result);
-
     }else if (is_binary_operator(self->node_id)){
 	assert(self->left != NULL);
 	assert(self->right != NULL);
@@ -541,10 +542,10 @@ evaluate_node(tr_node *self){
 		    case DOUBLE:
 			switch(right->node_id){
 			    case INT:
-				/* Evaluation Failure. Report an error */
+				/* Evaluation failure. Report an error */
 				break;
 			    case DOUBLE:
-				/* Evaluation Failure. Report an error */
+				/* Evaluation failure. Report an error */
 				break;
 			    case VARIABLE:
 				assert(0);
@@ -570,7 +571,6 @@ evaluate_node(tr_node *self){
 			assert(0);
 			break;
 		}
-		assert(0);
 		break;
 	    case MIN:
 		switch(left->node_id){
@@ -733,10 +733,6 @@ evaluate_node(tr_node *self){
 		assert(0);
 		break;
 	}
-
-	/* Add this newly generated node to the list */
-	ll_insert(ll_tmp_calc, (void *) result);
-
     }else{
 	/*
 	 * This is a branch, but this node does not have any operator.

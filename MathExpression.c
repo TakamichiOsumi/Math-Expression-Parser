@@ -131,7 +131,7 @@ T(void){
     return false;
 }
 
-/* T' -> * F T' | / F T' | $ */
+/* T' -> * F T' | / F T' | % F T' | $ */
 static bool
 T_dash(void){
     int token_code, CKP;
@@ -158,6 +158,23 @@ T_dash(void){
     /* T' -> / F T' */
     do {
 	if ((token_code = cyylex()) != DIVIDE)
+	    break;
+
+	if (F() == false)
+	    break;
+
+	if (T_dash() == false)
+	    break;
+
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    /* T' -> % F T' */
+    do {
+	if ((token_code = cyylex()) != REMAINDER)
 	    break;
 
 	if (F() == false)

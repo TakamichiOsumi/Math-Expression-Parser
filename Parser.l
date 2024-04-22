@@ -147,8 +147,6 @@ extern void evaluate_tree(tree *t);
 
 static lex_data
 lex_pop(){
-    lex_data ldata = { INVALID, 0, NULL };
-
     assert(lstack.stack_pointer >= 0);
 
     lstack.stack_pointer--;

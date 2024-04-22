@@ -21,9 +21,6 @@ typedef struct lex_stack {
 
 extern lex_stack lstack;
 
-#define STACK_TOPMOST_ELEM \
-    (lstack.main_data[lstack.stack_pointer - 1])
-
 /* Parse inputs */
 #define BUFFER_LEN 512
 extern char lex_buffer[BUFFER_LEN];
@@ -36,7 +33,6 @@ extern char *next_parse_pos;
 extern int cyylex();
 extern void yyrewind(int n);
 extern void parser_stack_reset(void);
-extern void lex_set_scan_buffer(const char *buffer);
 
 /* The caller must declare and pass one variable for below macros */
 #define CHECKPOINT(checkpoint_index) \

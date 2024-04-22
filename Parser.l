@@ -11,39 +11,20 @@ lex_stack lstack = { INVALID, { 0, 0, NULL} };
 char lex_buffer[BUFFER_LEN];
 char *next_parse_pos = lex_buffer;
 
-extern void
+static void
 lex_set_scan_buffer(const char *buffer){
     yy_scan_string(buffer);
-}
-
-static void
-print_lex_data_in_stack(lex_data data, char *prefix, int index){
-    if (STRING_IS_NEWLINE(data.token_val)){
-	printf("%s : token = '\n' whose code is '%s' at index = %d\n",
-	       prefix,
-	       get_string_token(data.token_code),
-	       index);
-    }else{
-	printf("%s : token = '%s' whose code is '%s' at index = %d\n",
-	       prefix,
-	       data.token_val,
-	       get_string_token(data.token_code),
-	       index);
-    }
 }
 
 /* Stack operations */
 static void
 lex_push(lex_data data){
     assert(lstack.stack_pointer >= 0);
-
     if (lstack.stack_pointer > MAX_STACK_INDEX - 1){
 	printf("The stack pointer is bigger than the upper limit = %d\n",
 	       lstack.stack_pointer);
 	return;
     }
-
-    /* print_lex_data_in_stack(data, "\tPush", lstack.stack_pointer - 1); */
 
     lstack.main_data[lstack.stack_pointer++] = data;
 }
@@ -54,11 +35,6 @@ lex_pop(){
     lex_data *ldp;
 
     assert(lstack.stack_pointer >= 0);
-
-    /*
-    print_lex_data_in_stack(lstack.main_data[lstack.stack_pointer - 1],
-                            "\tPop ",
-                            lstack.stack_pointer - 1); */
 
     lstack.stack_pointer--;
 
@@ -83,19 +59,6 @@ process_white_space_or_tab(int type, int n){
     strncpy(ldata.token_val, yytext, yyleng + 1);
 
     lex_push(ldata);
-}
-
-/* Dump any useful information for debugging */
-static void
-debug_print(void){
-    int i;
-
-    printf("-----\n");
-    for (i = 0; i < lstack.stack_pointer; i++){
-	print_lex_data_in_stack(lstack.main_data[i], "debug",
-				lstack.stack_pointer - 1);
-    }
-    printf("-----\n");
 }
 
 extern void
@@ -181,6 +144,18 @@ parser_stack_reset(void){
 
 %%
 
+/* Parse functions */
+extern bool start_mathexpr_parse();
+extern bool start_ineq_mathexpr_parse();
+
+/* Convert parse results into postfix notation and tree structure */
+extern linked_list *convert_infix_to_postfix(lex_data *infix,
+					     int size_in);
+extern tree* convert_postfix_to_tree(linked_list *postfix_array);
+
+/* Evaluate the tree */
+extern void evaluate_tree(tree *t);
+
 int
 cyylex(){
     int token_code;
@@ -262,43 +237,36 @@ test_format_check(char *s){
     }
 }
 
-extern bool start_mathexpr_parse();
-extern bool start_ineq_mathexpr_parse();
-tree* convert_postfix_to_tree(linked_list *postfix_array);
-typedef bool (*parser_func)(void);
-
 /*
- * Input strings as 'tested' whose last string is null.
+ * Input strings as 'targets' whose last string should be NULL.
  *
  * Iterate each string and pass it to the parser. Then,
  * check whether the parser returned the expected boolean
  * result or not.
  *
- * Note : if one string of 'tested' ended without a new line,
- * then, quit the test and exit for quick notification.
+ * Note : if one string of 'targets' ended without a new line,
+ * then quit the test and exit for quick notification.
  */
 static void
-parser_test(parser_func parser,
-	    char **tested, bool expected_result){
+parser_test(bool (*parser)(void),
+	    char **targets, bool expected_result){
     char last_char;
     int iter = 0;
 
-    while (tested[iter]){
+    while (targets[iter]){
 	/* Clean up */
 	parser_stack_reset();
 	memset(lex_buffer, '\0', BUFFER_LEN);
 
 	/* Pretest format check */
-	test_format_check(tested[iter]);
+	test_format_check(targets[iter]);
 
 	/* Copy the test string to the buffer */
-	strncpy(lex_buffer, tested[iter], strlen(tested[iter]));
+	strncpy(lex_buffer, targets[iter], strlen(targets[iter]));
 	lex_set_scan_buffer(lex_buffer);
 
 	/* Parse the string */
 	assert(parser() == expected_result);
-
-	/* debug_print(); */
 
 	/* Move to the next string */
 	iter++;
@@ -306,7 +274,8 @@ parser_test(parser_func parser,
 }
 
 static void
-converter_test(parser_func parser, char *tested, char **answer, int answer_length){
+converter_test(bool (*parser)(void),
+	       char *target, char **answer, int answer_length){
     int i;
     linked_list *postfix_array;
     node *lln;
@@ -316,11 +285,11 @@ converter_test(parser_func parser, char *tested, char **answer, int answer_lengt
     parser_stack_reset();
 
     /* Pretest format check */
-    test_format_check(tested);
+    test_format_check(target);
 
     /* Copy the test string to the buffer */
     memset(lex_buffer, '\0', BUFFER_LEN);
-    strncpy(lex_buffer, tested, strlen(tested));
+    strncpy(lex_buffer, target, strlen(target));
     lex_set_scan_buffer(lex_buffer);
 
     assert(parser() == true);
@@ -333,49 +302,48 @@ converter_test(parser_func parser, char *tested, char **answer, int answer_lengt
 	lln = ll_get_first_node(postfix_array);
 	curr = (lex_data *) lln->data;
 	if (strncmp(curr->token_val, answer[i], strlen(answer[i])) != 0){
-	    printf("index = %d : expected the postfix string = %s, but it was = %s\n",
+	    printf("index = %d : expected the postfix string = '%s', but it was '%s'\n",
 		   i, answer[i], curr->token_val);
 	    exit(-1);
 	}
     }
-    /* t = convert_postfix_to_tree(postfix_array); */
 }
 
-extern void evaluate_tree(tree *t);
-
 static void
-evaluation_test(parser_func parser, char *tested){
+evaluation_test(bool (*parser)(void), char **targets){
     linked_list *postfix_array;
     node *lln;
     lex_data *curr;
     tree *t;
+    int iter = 0;
 
-    /* Clean up */
-    parser_stack_reset();
+    while(targets[iter]){
+	  /* Clean up */
+	  parser_stack_reset();
 
-    /* Pretest format check */
-    test_format_check(tested);
+	  /* Pretest format check */
+	  test_format_check(targets[iter]);
 
-    /* Copy the test string to the buffer */
-    memset(lex_buffer, '\0', BUFFER_LEN);
-    strncpy(lex_buffer, tested, strlen(tested));
-    lex_set_scan_buffer(lex_buffer);
+	  /* Copy the test string to the buffer */
+	  memset(lex_buffer, '\0', BUFFER_LEN);
+	  strncpy(lex_buffer, targets[iter], strlen(targets[iter]));
+	  lex_set_scan_buffer(lex_buffer);
 
-    /* Parse the string */
-    assert(parser() == true);
-    postfix_array = convert_infix_to_postfix(lstack.main_data,
-					     lstack.stack_pointer);
+	  /* Parse the string */
+	  assert(parser() == true);
+	  postfix_array = convert_infix_to_postfix(lstack.main_data,
+						   lstack.stack_pointer);
+	  /* Convert the postfix array to tree and evaluate it */
+	  t = convert_postfix_to_tree(postfix_array);
+	  evaluate_tree(t);
 
-    /* Convert the postfix array to tree and evaluate it */
-    t = convert_postfix_to_tree(postfix_array);
-    evaluate_tree(t);
+	  /* Move to the next string */
+	  iter++;
+    }
 }
 
-extern linked_list *convert_infix_to_postfix(lex_data *infix,
-					     int size_in);
-
-int
-main(int argc, char **argv){
+static void
+execute_full_parser_tests(void){
     char *success[BUFFER_LEN] = {
 	/* single token */
 	"1\n",
@@ -459,31 +427,33 @@ main(int argc, char **argv){
 	NULL,
     };
 
-    char
-	*conversion_test1 = "max(a, b)\n",
+    char *conversion_test1 = "max(a, b)\n",
 	*conversion_test2 = "a + sqr(b) * sqrt(c) + pow(d, e)\n",
 	*conversion_test3 = "((-1 * b) + sqrt(sqr(b) - 4 * a * c)) / (2 * a)\n";
 
-    char
-	*answer1[BUFFER_LEN] = { "a", "b", "max" },
+    char *answer1[BUFFER_LEN] = { "a", "b", "max" },
 	*answer2[BUFFER_LEN] = { "a", "b", "sqr", "c", "sqrt",
 				 "*", "+", "d", "e", "pow", "+" },
 	*answer3[BUFFER_LEN] = { "-1", "b", "*", "b", "sqr", "4", "a",
-				 "*", "c", "*", "-", "sqrt", "+", "2", "a", "*", "/" };
-    char
-	*eval_test1 = "max(1, 2)\n",
-	*eval_test2 = "5.0 + 10\n",
-	*eval_test3 = "10 + 5.0\n",
-	*eval_test4 = "1 - 2\n",
-	*eval_test5 = "10 - 2.0\n",
-	*eval_test6 = "min(-10, 1)\n",
-	*eval_test7 = "min(1, 10)\n",
-	*eval_test8 = "-5\n",
-	*eval_test9 = "sqrt(16)\n",
-	*eval_test10 = "sqr(10)\n",
-	*eval_test11 = "sqr(3) + min(10, 0) + sqrt(25.0)\n",
-	*eval_test12 = "25 % 7\n",
-	*eval_test13 = "100 / 2\n";
+				 "*", "c", "*", "-", "sqrt", "+",
+				 "2", "a", "*", "/" };
+
+    char *eval_tests[BUFFER_LEN] = {
+	"max(1, 2)\n",
+	"5.0 + 10\n",
+	"10 + 5.0\n",
+	"1 - 2\n",
+	"10 - 2.0\n",
+	"min(-10, 1)\n",
+	"min(1, 10)\n",
+	"-5\n",
+	"sqrt(16)\n",
+	"sqr(10)\n",
+	"sqr(3) + min(10, 0) + sqrt(25.0)\n",
+	"25 % 7\n",
+	"100 / 2\n",
+	NULL,
+    };
 
     parser_test(start_mathexpr_parse, success, true);
     parser_test(start_mathexpr_parse, failure, false);
@@ -494,19 +464,13 @@ main(int argc, char **argv){
     converter_test(start_mathexpr_parse, conversion_test2, answer2, 11);
     converter_test(start_mathexpr_parse, conversion_test3, answer3, 17);
 
-    evaluation_test(start_mathexpr_parse, eval_test1);
-    evaluation_test(start_mathexpr_parse, eval_test2);
-    evaluation_test(start_mathexpr_parse, eval_test3);
-    evaluation_test(start_mathexpr_parse, eval_test4);
-    evaluation_test(start_mathexpr_parse, eval_test5);
-    evaluation_test(start_mathexpr_parse, eval_test6);
-    evaluation_test(start_mathexpr_parse, eval_test7);
-    evaluation_test(start_mathexpr_parse, eval_test8);
-    evaluation_test(start_mathexpr_parse, eval_test9);
-    evaluation_test(start_mathexpr_parse, eval_test10);
-    evaluation_test(start_mathexpr_parse, eval_test11);
-    evaluation_test(start_mathexpr_parse, eval_test12);
-    evaluation_test(start_mathexpr_parse, eval_test13);
+    evaluation_test(start_mathexpr_parse, eval_tests);
+}
+
+int
+main(int argc, char **argv){
+
+    execute_full_parser_tests();
 
     printf("All tests are done gracefully\n");
 

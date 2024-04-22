@@ -11,15 +11,16 @@ lex_stack lstack = { INVALID, { 0, 0, NULL} };
 char lex_buffer[BUFFER_LEN];
 char *next_parse_pos = lex_buffer;
 
+/* functions required for parse processing */
 static void
 lex_set_scan_buffer(const char *buffer){
     yy_scan_string(buffer);
 }
 
-/* Stack operations */
 static void
 lex_push(lex_data data){
     assert(lstack.stack_pointer >= 0);
+
     if (lstack.stack_pointer > MAX_STACK_INDEX - 1){
 	printf("The stack pointer is bigger than the upper limit = %d\n",
 	       lstack.stack_pointer);
@@ -27,18 +28,6 @@ lex_push(lex_data data){
     }
 
     lstack.main_data[lstack.stack_pointer++] = data;
-}
-
-static lex_data
-lex_pop(){
-    lex_data ldata = { INVALID, 0, NULL };
-    lex_data *ldp;
-
-    assert(lstack.stack_pointer >= 0);
-
-    lstack.stack_pointer--;
-
-    return lstack.main_data[lstack.stack_pointer];
 }
 
 static void
@@ -155,6 +144,17 @@ extern tree* convert_postfix_to_tree(linked_list *postfix_array);
 
 /* Evaluate the tree */
 extern void evaluate_tree(tree *t);
+
+static lex_data
+lex_pop(){
+    lex_data ldata = { INVALID, 0, NULL };
+
+    assert(lstack.stack_pointer >= 0);
+
+    lstack.stack_pointer--;
+
+    return lstack.main_data[lstack.stack_pointer];
+}
 
 int
 cyylex(){

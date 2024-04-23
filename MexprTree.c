@@ -188,15 +188,15 @@ evaluate_tree(tree *t){
     result = evaluate_node(t->root);
     switch(result->node_id){
 	case INT:
-	    printf("---- <Calculation result> ----\n%d\n",
+	    printf("=> %d\n",
 		   result->unv.ival);
 	    break;
 	case DOUBLE:
-	    printf("---- <Calculation result> ----\n%f\n",
+	    printf("=> %f\n",
 		   result->unv.dval);
 	    break;
 	case VARIABLE:
-	    printf("---- <Calculation result> ---- \n%s\n",
+	    printf("=> %s\n",
 		   result->unv.vval);
 	    break;
 	default:

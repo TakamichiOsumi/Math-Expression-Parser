@@ -342,7 +342,7 @@ evaluation_test(bool (*parser)(void), char **targets){
 
 static void
 execute_full_parser_tests(void){
-    char *success[BUFFER_LEN] = {
+    char *success[] = {
 	/* single token */
 	"1\n",
 	"-2\n",
@@ -373,7 +373,7 @@ execute_full_parser_tests(void){
 	NULL,
     };
 
-    char *failure[BUFFER_LEN] = {
+    char *failure[] = {
 	/* plus/minus */
 	"+\n",
 	"- 1\n",
@@ -398,7 +398,7 @@ execute_full_parser_tests(void){
 	NULL,
     };
 
-    char *ineq_success[BUFFER_LEN] = {
+    char *ineq_success[] = {
 	"1 < 2\n",
 	"1 > 2\n",
 	"a > (1 + 10)\n",
@@ -409,7 +409,7 @@ execute_full_parser_tests(void){
 	NULL,
     };
 
-    char *ineq_failure[BUFFER_LEN] = {
+    char *ineq_failure[] = {
 	">\n"
 	">=\n",
 	"< 1\n",
@@ -429,14 +429,14 @@ execute_full_parser_tests(void){
 	*conversion_test2 = "a + sqr(b) * sqrt(c) + pow(d, e)\n",
 	*conversion_test3 = "((-1 * b) + sqrt(sqr(b) - 4 * a * c)) / (2 * a)\n";
 
-    char *answer1[BUFFER_LEN] = { "a", "b", "max" },
-	*answer2[BUFFER_LEN] = { "a", "b", "sqr", "c", "sqrt",
-				 "*", "+", "d", "e", "pow", "+" },
-	*answer3[BUFFER_LEN] = { "-1", "b", "*", "b", "sqr", "4", "a",
-				 "*", "c", "*", "-", "sqrt", "+",
+    char *answer1[] = { "a", "b", "max" },
+	*answer2[] = { "a", "b", "sqr", "c", "sqrt",
+		       "*", "+", "d", "e", "pow", "+" },
+	*answer3[] = { "-1", "b", "*", "b", "sqr", "4", "a",
+		       "*", "c", "*", "-", "sqrt", "+",
 				 "2", "a", "*", "/" };
 
-    char *eval_tests[BUFFER_LEN] = {
+    char *eval_tests[] = {
 	"max(1, 2)\n",
 	"5.0 + 10\n",
 	"10 + 5.0\n",

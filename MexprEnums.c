@@ -108,6 +108,12 @@ get_string_token(int token_code){
 	case EQ:
 	    return "EQ";
 
+	    /* Logical operator */
+	case OR:
+	    return "OR";
+	case AND:
+	    return "AND";
+
 	    /* Data type */
 	case INT:
 	    return "INT";
@@ -115,6 +121,8 @@ get_string_token(int token_code){
 	    return "DOUBLE";
 	case VARIABLE:
 	    return "VARIABLE";
+	case BOOLEAN:
+	    return "BOOLEAN";
 
 	default:
 	    break;
@@ -132,24 +140,36 @@ is_skipped_token(int token_code){
 bool
 is_operand(int token_code){
     return (token_code == VARIABLE || token_code == INT ||
-	    token_code == DOUBLE);
+	    token_code == DOUBLE || token_code == BOOLEAN);
 }
 
 bool
 is_operator(int token_code){
     switch(token_code){
+	/* Binary operator */
 	case PLUS:
 	case MINUS:
 	case MULTIPLY:
 	case DIVIDE:
 	case REMAINDER:
-	case MAX:
 	case MIN:
+	case MAX:
 	case POW:
+	/* Unary operator */
 	case SIN:
 	case COS:
 	case SQR:
 	case SQRT:
+	/* Inequality operator */
+	case GREATER_THAN_OR_EQUAL_TO:
+	case LESS_THAN_OR_EQUAL_TO:
+	case GREATER_THAN:
+	case LESS_THAN:
+	case NEQ:
+	case EQ:
+	/* Logical operator */
+	case OR:
+	case AND:
 	    return true;
 	default:
 	    return false;
@@ -180,6 +200,14 @@ is_binary_operator(int token_code){
 	case MIN:
 	case MAX:
 	case POW:
+	case GREATER_THAN_OR_EQUAL_TO:
+	case LESS_THAN_OR_EQUAL_TO:
+	case GREATER_THAN:
+	case LESS_THAN:
+	case NEQ:
+	case EQ:
+	case OR:
+	case AND:
 	    return true;
 	default:
 	    return false;

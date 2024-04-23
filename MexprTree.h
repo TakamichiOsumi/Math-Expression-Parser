@@ -1,21 +1,63 @@
 #ifndef __MATH_EXPR_TREE__
 #define __MATH_EXPR_TREE__
 
-union node_value {
+#include <stdbool.h>
 
-    int ival;
-    double dval;
+typedef struct tr_node tr_node;
+
+/*
+ * VARIABLE type defined in 'tr_node'.
+ *
+ * VARIABLE type should be retrieved by its operand name
+ * as key from its data source. Meanwhile, this is a part
+ * of library code. Then, we have to make it possible that
+ * each VARIABLE fetches its data provided by application
+ * side. Application needs to give two pieces of information,
+ * 'app_data_src' and 'app_access_cb' for that purpose.
+ *
+ * See the beginning of evaluate_node() for the usage.
+ */
+typedef struct variable {
+    char *vname;
+
+    /* True if the 'vdata' is already fetched */
+    bool is_resolved;
+    tr_node *vdata;
 
     /*
-     * VARIABLE or string representation of operator
+     * Application-defined external data storage
+     * and access callback.
      */
-    char *vval;
+    void *app_data_src;
+    tr_node *(*app_access_cb)(void *);
 
-};
+} variable;
+
+typedef union node_value {
+
+    /*
+     * String representation of operator
+     */
+    char *operator;
+
+    /* INT */
+    int ival;
+
+    /* DOUBLE */
+    double dval;
+
+    /* VARIABLE */
+    variable vval;
+
+    /* BOOLEAN */
+    bool bval;
+
+} node_value;
 
 typedef struct tr_node {
     int node_id;
 
+    /* This 'unv' represents union value */
     union node_value unv;
 
     /* Refer to the other operand or operator */

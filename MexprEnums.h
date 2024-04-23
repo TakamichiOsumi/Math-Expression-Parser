@@ -46,14 +46,15 @@ typedef enum operator {
     EQ,
 
     /* TODO : Logical operators */
-    /* OR, */
-    /* AND, */
+    OR,
+    AND,
 } operator;
 
 typedef enum data_type {
-    INT = EQ + 1,
+    INT = AND + 1,
     DOUBLE,
     VARIABLE,
+    BOOLEAN,
 } data_type;
 
 char *get_string_token(int token_code);

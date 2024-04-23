@@ -12,7 +12,7 @@
 /*
  * To free all memory allocated during computation of tree,
  * keep the tree as it is, and connect all the temporary
- * computation results in a linked list.
+ * one-shot computation results in a linked list.
  *
  * After the root node returns the final computation result,
  * free the memory with free callback.
@@ -106,7 +106,7 @@ gen_tr_node_from_lex_data(lex_data *ld){
 	case MAX:
 	case POW:
 	    n->node_id = ld->token_code;
-	    n->unv.vval = ld->token_val;
+	    n->unv.operator = ld->token_val;
 	    break;
 
 	/* Unary operator */
@@ -115,7 +115,7 @@ gen_tr_node_from_lex_data(lex_data *ld){
 	case SQR:
 	case SQRT:
 	    n->node_id = ld->token_code;
-	    n->unv.vval = ld->token_val;
+	    n->unv.operator = ld->token_val;
 	    break;
 
 	/*
@@ -136,7 +136,14 @@ gen_tr_node_from_lex_data(lex_data *ld){
 	case VARIABLE:
 	    assert(ld->token_val != NULL);
 	    n->node_id = ld->token_code;
-	    n->unv.vval = ld->token_val;
+	    n->unv.vval.vname = ld->token_val;
+	    n->unv.vval.is_resolved = false;
+	    n->unv.vval.vdata = NULL;
+	    /*
+	     * Application-specific data. Currently NULL.
+	     */
+	    n->unv.vval.app_data_src = NULL;
+	    n->unv.vval.app_access_cb = NULL;
 	    break;
 
 	default:
@@ -197,7 +204,7 @@ evaluate_tree(tree *t){
 	    break;
 	case VARIABLE:
 	    printf("=> %s\n",
-		   result->unv.vval);
+		   result->unv.vval.vname);
 	    break;
 	default:
 	    assert(0);
@@ -214,7 +221,7 @@ evaluate_tree(tree *t){
 /*
  * Calculate VARIABLE type is not supported yet.
  *
- * Also, there needs to handle exit case, like
+ * Also, there are needs to handle exit case, like
  * zero division.
  */
 tr_node *
@@ -222,8 +229,31 @@ evaluate_node(tr_node *self){
     tr_node *result, *left, *right;
 
     /* Reach the leaf node ? */
-    if (self->left == NULL && self->right == NULL)
-	return self;
+    if (self->left == NULL && self->right == NULL){
+	if (self->node_id != VARIABLE)
+	    return self;
+	else{
+	    /* VARIABLE */
+	    variable *v;
+
+	    v = &self->unv.vval;
+	    assert(v->app_data_src != NULL);
+	    assert(v->app_access_cb != NULL);
+
+	    if (v->is_resolved){
+		printf("Calling 'app_access_cb' for '%s' has been skipped\n",
+		       v->vname);
+		return v->vdata;
+	    }
+
+	    assert(v->app_data_src != NULL);
+	    assert(v->app_access_cb != NULL);
+	    v->vdata = v->app_access_cb(v->app_data_src);
+	    v->is_resolved = true;
+
+	    return v->vdata;
+	}
+    }
 
     /* If not, execute the operator */
     if (is_unary_operator(self->node_id)){

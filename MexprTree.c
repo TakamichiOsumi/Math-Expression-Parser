@@ -54,7 +54,10 @@ gen_tree(void){
     return t;
 }
 
-static tr_node*
+/*
+ * Exported so that the application data can create tr_node * value easily.
+ */
+tr_node*
 gen_null_tr_node(void){
     tr_node *n;
 
@@ -154,12 +157,16 @@ gen_tr_node_from_lex_data(lex_data *ld){
     return n;
 }
 
+/*
+ * For variable resolution, create a doubly linked list
+ * with tree's 'list_left' and 'list_right' members.
+ */
 tree*
 convert_postfix_to_tree(linked_list *postfix_array){
     stack *node_stack = stack_init(ll_get_length(postfix_array));
     node *lln;
     lex_data *curr;
-    tr_node *trn;
+    tr_node *trn, *prev;
     tree *t = gen_tree();
 
     ll_begin_iter(postfix_array);
@@ -168,6 +175,15 @@ convert_postfix_to_tree(linked_list *postfix_array){
 	trn = gen_tr_node_from_lex_data(curr);
 	if (is_operand(curr->token_code)){
 	    stack_push(node_stack, (void *) trn);
+	    /* Create the dll */
+	    if (t->list_head == NULL){
+		/* first node */
+		prev = t->list_head = trn;
+	    }else{
+		assert(prev != NULL);
+		trn->list_left = prev;
+		prev->list_right = trn;
+	    }
 	}else if (is_unary_operator(curr->token_code)){
 	    trn->left = stack_pop(node_stack);
 	    stack_push(node_stack, (void *) trn);
@@ -248,7 +264,8 @@ evaluate_node(tr_node *self){
 
 	    assert(v->app_data_src != NULL);
 	    assert(v->app_access_cb != NULL);
-	    v->vdata = v->app_access_cb(v->app_data_src);
+	    v->vdata = v->app_access_cb(v->vname,
+					v->app_data_src);
 	    v->is_resolved = true;
 
 	    return v->vdata;

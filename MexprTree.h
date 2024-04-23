@@ -29,7 +29,7 @@ typedef struct variable {
      * and access callback.
      */
     void *app_data_src;
-    tr_node *(*app_access_cb)(void *);
+    tr_node *(*app_access_cb)(char *, void *);
 
 } variable;
 
@@ -82,6 +82,7 @@ typedef struct tree {
     struct tr_node *list_head;
 } tree;
 
+tr_node *gen_null_tr_node(void);
 tree* convert_postfix_to_tree(linked_list *postfix_array);
 
 #endif

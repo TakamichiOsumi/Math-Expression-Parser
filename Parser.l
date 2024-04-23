@@ -77,6 +77,10 @@ parser_stack_reset(void){
 
 \n               { return PARSER_EOF; }
 
+"or"             { return OR;    }
+
+"and"            { return AND;   }
+
 "min"            { return MIN;   }
 
 "max"            { return MAX;   }
@@ -226,12 +230,15 @@ static void
 test_format_check(char *s){
     char last_char;
 
-    if (strlen(s) > 2){
+    if (strlen(s) >= 2){
 	last_char = s[strlen(s) - 1];
 	if (last_char != '\n'){
 	    printf("invalid string format : '%s'\n", s);
 	    exit(-1);
 	}
+    }else{
+	printf("input string is too short : '%s\n", s);
+	exit(-1);
     }
 }
 
@@ -340,8 +347,39 @@ evaluation_test(bool (*parser)(void), char **targets){
     }
 }
 
+/* application data definition */
+typedef struct app_data {
+    char *name;
+    char *val;
+} app_data;
+
+static tr_node *
+app_fetch_data(char *variable, void *data){
+    int iter = 0;
+    app_data *ary = (app_data *) data;
+    tr_node *trn = gen_null_tr_node();
+
+    if (strncmp(variable, "a", strlen("a")) == 0){
+	trn->node_id = INT;
+	trn->unv.ival = strtol(ary[0].val, (char **) NULL, 10);
+    }else if (strncmp(variable, "b", strlen("b")) == 0){
+	trn->node_id = DOUBLE;
+	trn->unv.dval = strtod(ary[1].val, (char **) NULL);
+    }else if (strncmp(variable, "c", strlen("c")) == 0){
+	trn->node_id = INT;
+	trn->unv.ival = strtol(ary[2].val, (char **) NULL, 10);
+    }else if (strncmp(variable, "d", strlen("d")) == 0){
+	trn->node_id = INT;
+	trn->unv.ival = strtol(ary[3].val, (char **) NULL, 10);
+    }else{
+	assert(0);
+    }
+
+    return trn;
+}
+
 static void
-execute_full_parser_tests(void){
+math_parser_tests(void){
     char *success[] = {
 	/* single token */
 	"1\n",
@@ -398,6 +436,54 @@ execute_full_parser_tests(void){
 	NULL,
     };
 
+    char *conversion_test1 = "max(a, b)\n",
+	*conversion_test2 = "a + sqr(b) * sqrt(c) + pow(d, e)\n",
+	*conversion_test3 = "((-1 * b) + sqrt(sqr(b) - 4 * a * c)) / (2 * a)\n";
+
+    char *answer1[] = { "a", "b", "max" },
+	*answer2[] = { "a", "b", "sqr", "c", "sqrt",
+		       "*", "+", "d", "e", "pow", "+" },
+	*answer3[] = { "-1", "b", "*", "b", "sqr", "4", "a",
+		       "*", "c", "*", "-", "sqrt", "+", "2", "a", "*", "/" };
+
+    char *eval_tests[] = {
+	"max(1, 2)\n",
+	"5.0 + 10\n",
+	"10 + 5.0\n",
+	"1 - 2\n",
+	"10 - 2.0\n",
+	"min(-10, 1)\n",
+	"min(1, 10)\n",
+	"-5\n",
+	"sqrt(16)\n",
+	"sqr(10)\n",
+	"sqr(3) + min(10, 0) + sqrt(25.0)\n",
+	"25 % 7\n",
+	"100 / 2\n",
+	NULL,
+    };
+
+    /* data source */
+    app_data app_array[] = {
+	{ .name = "a", .val = "1" },
+	{ .name = "b", .val = "3.0" },
+	{ .name = "c", .val = "5" },
+	{ .name = "d", .val = "-1" },
+    };
+
+    parser_test(start_mathexpr_parse, success, true);
+    parser_test(start_mathexpr_parse, failure, false);
+    converter_test(start_mathexpr_parse, conversion_test1,
+		   answer1, 3);
+    converter_test(start_mathexpr_parse, conversion_test2,
+		   answer2, 11);
+    converter_test(start_mathexpr_parse, conversion_test3,
+		   answer3, 17);
+    evaluation_test(start_mathexpr_parse, eval_tests);
+}
+
+static void
+ineq_parser_tests(void){
     char *ineq_success[] = {
 	"1 < 2\n",
 	"1 > 2\n",
@@ -425,44 +511,22 @@ execute_full_parser_tests(void){
 	NULL,
     };
 
-    char *conversion_test1 = "max(a, b)\n",
-	*conversion_test2 = "a + sqr(b) * sqrt(c) + pow(d, e)\n",
-	*conversion_test3 = "((-1 * b) + sqrt(sqr(b) - 4 * a * c)) / (2 * a)\n";
-
-    char *answer1[] = { "a", "b", "max" },
-	*answer2[] = { "a", "b", "sqr", "c", "sqrt",
-		       "*", "+", "d", "e", "pow", "+" },
-	*answer3[] = { "-1", "b", "*", "b", "sqr", "4", "a",
-		       "*", "c", "*", "-", "sqrt", "+",
-				 "2", "a", "*", "/" };
-
-    char *eval_tests[] = {
-	"max(1, 2)\n",
-	"5.0 + 10\n",
-	"10 + 5.0\n",
-	"1 - 2\n",
-	"10 - 2.0\n",
-	"min(-10, 1)\n",
-	"min(1, 10)\n",
-	"-5\n",
-	"sqrt(16)\n",
-	"sqr(10)\n",
-	"sqr(3) + min(10, 0) + sqrt(25.0)\n",
-	"25 % 7\n",
-	"100 / 2\n",
-	NULL,
-    };
-
-    parser_test(start_mathexpr_parse, success, true);
-    parser_test(start_mathexpr_parse, failure, false);
     parser_test(start_ineq_mathexpr_parse, ineq_success, true);
     parser_test(start_ineq_mathexpr_parse, ineq_failure, false);
+}
 
-    converter_test(start_mathexpr_parse, conversion_test1, answer1, 3);
-    converter_test(start_mathexpr_parse, conversion_test2, answer2, 11);
-    converter_test(start_mathexpr_parse, conversion_test3, answer3, 17);
+/* TODO */
+static void
+logical_parser_tests(void){}
 
-    evaluation_test(start_mathexpr_parse, eval_tests);
+static void
+execute_full_parser_tests(){
+    /* Math expression */
+    math_parser_tests();
+    /* Inequality expression */
+    ineq_parser_tests();
+    /* Logical expression */
+    logical_parser_tests();
 }
 
 int

@@ -50,6 +50,7 @@ gen_tree(void){
     }
 
     t->root = t->list_head = NULL;
+    t->require_resolution = t->resolved = false;
 
     return t;
 }
@@ -138,15 +139,16 @@ gen_tr_node_from_lex_data(lex_data *ld){
 	    break;
 	case VARIABLE:
 	    assert(ld->token_val != NULL);
+	    /*
+	     * We are making a tree from postfix notation now.
+	     * So, initializing the tr_node by below values is fine.
+	     * The resolution will be done against the tree after
+	     * we build it.
+	     */
 	    n->node_id = ld->token_code;
 	    n->unv.vval.vname = ld->token_val;
 	    n->unv.vval.is_resolved = false;
 	    n->unv.vval.vdata = NULL;
-	    /*
-	     * Application-specific data. Currently NULL.
-	     */
-	    n->unv.vval.app_data_src = NULL;
-	    n->unv.vval.app_access_cb = NULL;
 	    break;
 
 	default:
@@ -159,7 +161,7 @@ gen_tr_node_from_lex_data(lex_data *ld){
 
 /*
  * For variable resolution, create a doubly linked list
- * with tree's 'list_left' and 'list_right' members.
+ * with tree's 'list_left' and 'list_right' variables.
  */
 tree*
 convert_postfix_to_tree(linked_list *postfix_array){
@@ -170,29 +172,41 @@ convert_postfix_to_tree(linked_list *postfix_array){
     tree *t = gen_tree();
 
     ll_begin_iter(postfix_array);
+
     while((lln = ll_get_iter_node(postfix_array)) != NULL){
 	curr = (lex_data *) lln->data;
 	trn = gen_tr_node_from_lex_data(curr);
+
 	if (is_operand(curr->token_code)){
 	    stack_push(node_stack, (void *) trn);
-	    /* Create the dll */
+
+	    /* Create the dll by leaf nodes */
 	    if (t->list_head == NULL){
-		/* first node */
 		prev = t->list_head = trn;
 	    }else{
 		assert(prev != NULL);
 		trn->list_left = prev;
 		prev->list_right = trn;
 	    }
+
+	    /* Lastly, does this tree need the resolution ? */
+	    if (curr->token_code == VARIABLE)
+		t->require_resolution = true;
+
 	}else if (is_unary_operator(curr->token_code)){
+
 	    trn->left = stack_pop(node_stack);
 	    stack_push(node_stack, (void *) trn);
+
 	}else if (is_binary_operator(curr->token_code)){
+
 	    trn->right = stack_pop(node_stack);
 	    trn->left = stack_pop(node_stack);
 	    stack_push(node_stack, (void *) trn);
+
 	}
     }
+
     ll_end_iter(postfix_array);
 
     assert((t->root = stack_pop(node_stack)) != NULL);
@@ -235,10 +249,12 @@ evaluate_tree(tree *t){
 }
 
 /*
- * Calculate VARIABLE type is not supported yet.
+ * There are needs to handle exit case, like zero division.
  *
- * Also, there are needs to handle exit case, like
- * zero division.
+ * As for the path to access the VARIABLE node, there are
+ * assert() statements. This is because the recursive call
+ * of evaluate_node() returns concrete value types such as
+ * INT and DOUBLE.
  */
 tr_node *
 evaluate_node(tr_node *self){
@@ -253,20 +269,7 @@ evaluate_node(tr_node *self){
 	    variable *v;
 
 	    v = &self->unv.vval;
-	    assert(v->app_data_src != NULL);
-	    assert(v->app_access_cb != NULL);
-
-	    if (v->is_resolved){
-		printf("Calling 'app_access_cb' for '%s' has been skipped\n",
-		       v->vname);
-		return v->vdata;
-	    }
-
-	    assert(v->app_data_src != NULL);
-	    assert(v->app_access_cb != NULL);
-	    v->vdata = v->app_access_cb(v->vname,
-					v->app_data_src);
-	    v->is_resolved = true;
+	    assert(v != NULL);
 
 	    return v->vdata;
 	}
@@ -788,4 +791,24 @@ evaluate_node(tr_node *self){
     }
 
     return result;
+}
+
+void
+resolve_variable(tree *t, void *app_data_src,
+		 tr_node *(*app_access_cb)(struct variable *, void *)){
+    tr_node *n;
+    variable *v;
+
+    assert(t != NULL);
+    assert(t->list_head != NULL);
+
+    n = t->list_head;
+
+    while(n != NULL){
+	if (n->node_id == VARIABLE){
+	    v = &n->unv.vval;
+	    app_access_cb(v, app_data_src);
+	}
+	n = n->list_right;
+    }
 }

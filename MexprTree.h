@@ -14,22 +14,15 @@ typedef struct tr_node tr_node;
  * each VARIABLE fetches its data provided by application
  * side. Application needs to give two pieces of information,
  * 'app_data_src' and 'app_access_cb' for that purpose.
- *
- * See the beginning of evaluate_node() for the usage.
  */
 typedef struct variable {
     char *vname;
 
-    /* True if the 'vdata' is already fetched */
+    /* True when the 'vdata' is already fetched */
     bool is_resolved;
-    tr_node *vdata;
 
-    /*
-     * Application-defined external data storage
-     * and access callback.
-     */
-    void *app_data_src;
-    tr_node *(*app_access_cb)(char *, void *);
+    /* Not null when the resolution has ended */
+    tr_node *vdata;
 
 } variable;
 
@@ -80,9 +73,20 @@ typedef struct tree {
 
     /* Refer to the leftmost leaf node */
     struct tr_node *list_head;
+
+    /*
+     * Determined if this tree needs resolution or not,
+     * during making the tree.
+     */
+    bool require_resolution;
+
+    /* True if the resolution is conducted */
+    bool resolved;
 } tree;
 
 tr_node *gen_null_tr_node(void);
 tree* convert_postfix_to_tree(linked_list *postfix_array);
+void resolve_variable(tree *t, void *app_data_src,
+		      tr_node *(* app_access_cb)(struct variable *, void *));
 
 #endif

@@ -354,23 +354,31 @@ typedef struct app_data {
 } app_data;
 
 static tr_node *
-app_fetch_data(char *variable, void *data){
+app_fetch_data(variable *v, void *data){
     int iter = 0;
     app_data *ary = (app_data *) data;
     tr_node *trn = gen_null_tr_node();
 
-    if (strncmp(variable, "a", strlen("a")) == 0){
+    if (strncmp(v->vname, "a", strlen("a")) == 0){
 	trn->node_id = INT;
 	trn->unv.ival = strtol(ary[0].val, (char **) NULL, 10);
-    }else if (strncmp(variable, "b", strlen("b")) == 0){
+	v->is_resolved = true;
+	v->vdata = trn;
+    }else if (strncmp(v->vname, "b", strlen("b")) == 0){
 	trn->node_id = DOUBLE;
 	trn->unv.dval = strtod(ary[1].val, (char **) NULL);
-    }else if (strncmp(variable, "c", strlen("c")) == 0){
+	v->is_resolved = true;
+	v->vdata = trn;
+    }else if (strncmp(v->vname, "c", strlen("c")) == 0){
 	trn->node_id = INT;
 	trn->unv.ival = strtol(ary[2].val, (char **) NULL, 10);
-    }else if (strncmp(variable, "d", strlen("d")) == 0){
+	v->is_resolved = true;
+	v->vdata = trn;
+    }else if (strncmp(v->vname, "d", strlen("d")) == 0){
 	trn->node_id = INT;
 	trn->unv.ival = strtol(ary[3].val, (char **) NULL, 10);
+	v->is_resolved = true;
+	v->vdata = trn;
     }else{
 	assert(0);
     }

@@ -246,15 +246,28 @@ test_format_check(char *s){
     }
 }
 
+static void
+init_buffer(char *target){
+    /* Format check */
+    test_format_check(target);
+
+    /* Clean up the stack */
+    parser_stack_reset();
+
+    /* Copy the string to the lex buffer */
+    memset(lex_buffer, '\0', BUFFER_LEN);
+    strncpy(lex_buffer, target, strlen(target));
+
+    /* Let the parser know which buffer to parse */
+    lex_set_scan_buffer(lex_buffer);
+}
+
 /*
- * Input strings as 'targets' whose last string should be NULL.
+ * Input strings as 'targets' whose last string is NULL.
  *
  * Iterate each string and pass it to the parser. Then,
  * check whether the parser returned the expected boolean
  * result or not.
- *
- * Note : if one string of 'targets' ended without a new line,
- * then quit the test and exit for quick notification.
  */
 static void
 parser_test(bool (*parser)(void),
@@ -262,16 +275,9 @@ parser_test(bool (*parser)(void),
     int iter = 0;
 
     while (targets[iter]){
-	/* Clean up */
-	parser_stack_reset();
-	memset(lex_buffer, '\0', BUFFER_LEN);
 
-	/* Pretest format check */
-	test_format_check(targets[iter]);
-
-	/* Copy the test string to the buffer */
-	strncpy(lex_buffer, targets[iter], strlen(targets[iter]));
-	lex_set_scan_buffer(lex_buffer);
+	/* Prepare the test */
+	init_buffer(targets[iter]);
 
 	/* Parse the string */
 	assert(parser() == expected_result);
@@ -289,21 +295,13 @@ converter_test(bool (*parser)(void),
     node *lln;
     lex_data *curr;
 
-    /* Clean up */
-    parser_stack_reset();
-
-    /* Pretest format check */
-    test_format_check(target);
-
-    /* Copy the test string to the buffer */
-    memset(lex_buffer, '\0', BUFFER_LEN);
-    strncpy(lex_buffer, target, strlen(target));
-    lex_set_scan_buffer(lex_buffer);
+    init_buffer(target);
 
     assert(parser() == true);
 
     postfix_array = convert_infix_to_postfix(lstack.main_data,
 					     lstack.stack_pointer);
+
     assert(ll_get_length(postfix_array) == answer_length);
 
     for (i = 0; i < answer_length; i++){
@@ -324,16 +322,8 @@ evaluation_test(bool (*parser)(void), char **targets){
     int iter = 0;
 
     while(targets[iter]){
-	/* Clean up */
-	parser_stack_reset();
-
-	/* Pretest format check */
-	test_format_check(targets[iter]);
-
-	/* Copy the test string to the buffer */
-	memset(lex_buffer, '\0', BUFFER_LEN);
-	strncpy(lex_buffer, targets[iter], strlen(targets[iter]));
-	lex_set_scan_buffer(lex_buffer);
+	/* Prepare the test */
+	init_buffer(targets[iter]);
 
 	/* Parse the string */
 	assert(parser() == true);
@@ -399,12 +389,8 @@ resolve_and_evaluate_test(bool (*parser)(void), char *target){
     tree *t;
     linked_list *postfix;
 
-    parser_stack_reset();
-
-    test_format_check(target);
-    memset(lex_buffer, '\0', BUFFER_LEN);
-    strncpy(lex_buffer, target, strlen(target));
-    lex_set_scan_buffer(lex_buffer);
+    /* Prepare the test */
+    init_buffer(target);
 
     assert(parser() == true);
 
@@ -523,6 +509,7 @@ math_parser_tests(void){
     resolve_and_evaluate_test(start_mathexpr_parse, "d\n");
     resolve_and_evaluate_test(start_mathexpr_parse, "min(b, d)\n");
     resolve_and_evaluate_test(start_mathexpr_parse, "max(b, d)\n");
+    resolve_and_evaluate_test(start_mathexpr_parse, "sqr(c)\n");
 }
 
 static void

@@ -16,6 +16,14 @@
  *  I  ->  = | != | < | > | <= | >=
  *  P  ->  SIN | COS | SQR | SQRT
  *  G  ->  MAX | MIN | POW
+ *  S  ->  J S'
+ *  S' ->  OR J S' | $
+ *  J  ->  K J'
+ *  J' ->  AND K J' | $
+ *  K  ->  ( S ) K' | D K' | Q L K K'
+ *  K' ->  L Q K' | $
+ *  D  ->  Q L Q
+ *  L  ->  AND | OR
  *
  * Dollar sign means empty.
  *

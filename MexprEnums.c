@@ -29,9 +29,10 @@ operator_precedence(int token_code){
 	case NEQ:
 	case EQ:
 	    return 3;
-	    /* Not yet implemented */
-	    /* case AND: return 2; */
-	    /* case OR: return 1; */
+	case AND:
+	    return 2;
+	case OR:
+	    return 1;
 	case BRACKET_START:
 	case BRACKET_END:
 	    return 0;

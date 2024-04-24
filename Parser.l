@@ -77,6 +77,10 @@ parser_stack_reset(void){
 
 \n               { return PARSER_EOF; }
 
+"TRUE"           { return BOOLEAN;  }
+
+"FALSE"          { return BOOLEAN;  }
+
 "or"             { return OR;    }
 
 "and"            { return AND;   }
@@ -111,8 +115,6 @@ parser_stack_reset(void){
 
 ","              { return COMMA;     }
 
-"!="             { return NEQ;       }
-
 ">="             { return GREATER_THAN_OR_EQUAL_TO; }
 
 "<="             { return LESS_THAN_OR_EQUAL_TO;    }
@@ -120,6 +122,8 @@ parser_stack_reset(void){
 "<"              { return LESS_THAN;    }
 
 ">"              { return GREATER_THAN; }
+
+"!="             { return NEQ;       }
 
 "="              { return EQ;        }
 
@@ -140,6 +144,7 @@ parser_stack_reset(void){
 /* Parse functions */
 extern bool start_mathexpr_parse();
 extern bool start_ineq_mathexpr_parse();
+extern bool start_logical_mathexpr_parse();
 
 /* Convert parse array into postfix notation */
 extern linked_list *convert_infix_to_postfix(lex_data *infix,
@@ -179,6 +184,7 @@ cyylex(){
 	perror("malloc");
 	exit(-1);
     }
+
     memset(ldata.token_val, '\0', yyleng + 1);
     strncpy(ldata.token_val, yytext, yyleng + 1);
 
@@ -504,9 +510,12 @@ math_parser_tests(void){
 		   answer3, 17);
     evaluation_test(start_mathexpr_parse, eval_tests);
 
+    resolve_and_evaluate_test(start_mathexpr_parse, "a\n");
+    resolve_and_evaluate_test(start_mathexpr_parse, "b\n");
+    resolve_and_evaluate_test(start_mathexpr_parse, "c\n");
+    resolve_and_evaluate_test(start_mathexpr_parse, "d\n");
     resolve_and_evaluate_test(start_mathexpr_parse, "1 + a\n");
     resolve_and_evaluate_test(start_mathexpr_parse, "b * c * d\n");
-    resolve_and_evaluate_test(start_mathexpr_parse, "d\n");
     resolve_and_evaluate_test(start_mathexpr_parse, "min(b, d)\n");
     resolve_and_evaluate_test(start_mathexpr_parse, "max(b, d)\n");
     resolve_and_evaluate_test(start_mathexpr_parse, "sqr(c)\n");
@@ -545,9 +554,20 @@ ineq_parser_tests(void){
     parser_test(start_ineq_mathexpr_parse, ineq_failure, false);
 }
 
-/* TODO */
 static void
-logical_parser_tests(void){}
+logical_parser_tests(void){
+    char *logical_success[] = {
+	"TRUE\n",
+	"FALSE\n",
+	"1 < 2\n",
+	"3.0 <= 5.0\n",
+    };
+
+    resolve_and_evaluate_test(start_logical_mathexpr_parse,
+			      logical_success[0]);
+    resolve_and_evaluate_test(start_logical_mathexpr_parse,
+			      logical_success[1]);
+}
 
 static void
 execute_full_parser_tests(){
@@ -555,8 +575,8 @@ execute_full_parser_tests(){
     math_parser_tests();
     /* Inequality expression */
     ineq_parser_tests();
-    /* Logical expression */
-    logical_parser_tests();
+    /* Logical expression (Not supported yet) */
+    /* logical_parser_tests(); */
 }
 
 int

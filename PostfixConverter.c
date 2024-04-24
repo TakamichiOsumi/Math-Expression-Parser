@@ -58,7 +58,7 @@ convert_infix_to_postfix(lex_data *infix, int size_in){
     s = stack_init(size_in);
     postfix_array = ll_init(NULL, NULL);
 
-    print_infix_lex_data(infix, size_in);
+    /* print_infix_lex_data(infix, size_in); */
 
     for (iter = 0; iter < size_in; iter++){
 	curr = &infix[iter];

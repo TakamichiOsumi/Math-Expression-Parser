@@ -113,6 +113,24 @@ gen_tr_node_from_lex_data(lex_data *ld){
 	    n->unv.operator = ld->token_val;
 	    break;
 
+	/* Inequality operator */
+	case GREATER_THAN_OR_EQUAL_TO:
+	case LESS_THAN_OR_EQUAL_TO:
+	case GREATER_THAN:
+	case LESS_THAN:
+	case NEQ:
+	case EQ:
+	    n->node_id = ld->token_code;
+	    n->unv.operator = ld->token_val;
+	    break;
+
+	/* Logical operator */
+	case BOOLEAN:
+	    n->node_id = ld->token_code;
+	    n->unv.bval = (strncmp(ld->token_val, "TRUE",
+				   strlen("TRUE")) == 0) ? true : false;
+	    break;
+
 	/* Unary operator */
 	case SIN:
 	case COS:
@@ -243,6 +261,10 @@ evaluate_tree(tree *t){
 	    printf("=> %s\n",
 		   result->unv.vval.vname);
 	    break;
+	case BOOLEAN:
+	    printf("=> %s\n",
+		   result->unv.bval == true ? "true" : "false");
+	    break;
 	default:
 	    assert(0);
 	    break;
@@ -345,6 +367,9 @@ evaluate_node(tr_node *self){
 	    case VARIABLE:
 		assert(0);
 		break;
+	    case BOOLEAN:
+		/* Evaluation failure. Report an error */
+		break;
 	    default:
 		assert(0);
 		return NULL;
@@ -364,6 +389,7 @@ evaluate_node(tr_node *self){
 	    case PLUS:
 		switch(left->node_id){
 		    case INT:
+			/* INT + ? */
 			switch(right->node_id){
 			    case INT:
 				result->node_id = INT;
@@ -376,12 +402,16 @@ evaluate_node(tr_node *self){
 			    case VARIABLE:
 				assert(0);
 				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
 			    default:
 				assert(0);
 				break;
 			}
 			break;
 		    case DOUBLE:
+			/* DOUBLE + ? */
 			switch(right->node_id){
 			    case INT:
 				result->node_id = DOUBLE;
@@ -394,16 +424,26 @@ evaluate_node(tr_node *self){
 			    case VARIABLE:
 				assert(0);
 				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
 			    default:
 				assert(0);
 				break;
 			}
 			break;
 		    case VARIABLE:
+			/*
+			 * VARIABLE + ?
+			 *
+			 * VARIABLE should be resolved and converted
+			 * into different type here.
+			 */
 			switch(right->node_id){
 			    case INT:
 			    case DOUBLE:
 			    case VARIABLE:
+			    case BOOLEAN:
 				assert(0);
 				break;
 			    default:
@@ -411,6 +451,19 @@ evaluate_node(tr_node *self){
 				break;
 			}
 			break;
+		    case BOOLEAN:
+			/* BOOLEAN + ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+				break;
+			    case BOOLEAN:
+				break;
+			    default:
+				assert(0);
+				break;
+			}
 		    default:
 			assert(0);
 			break;
@@ -419,6 +472,7 @@ evaluate_node(tr_node *self){
 	    case MINUS:
 		switch(left->node_id){
 		    case INT:
+			/* INT - ? */
 			switch(right->node_id){
 			    case INT:
 				result->node_id = INT;
@@ -431,12 +485,16 @@ evaluate_node(tr_node *self){
 			    case VARIABLE:
 				assert(0);
 				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
 			    default:
 				assert(0);
 				break;
 			}
 			break;
 		    case DOUBLE:
+			/* DOUBLE - ? */
 			switch(right->node_id){
 			    case INT:
 				result->node_id = DOUBLE;
@@ -449,20 +507,38 @@ evaluate_node(tr_node *self){
 			    case VARIABLE:
 				assert(0);
 				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
 			    default:
 				assert(0);
 				break;
 			}
 			break;
 		    case VARIABLE:
+			/* VARIABLE - ? */
 			switch(right->node_id){
 			    case INT:
 			    case DOUBLE:
 			    case VARIABLE:
+			    case BOOLEAN:
 				assert(0);
 				break;
 			    default:
 				assert(0);
+				break;
+			}
+			break;
+		    case BOOLEAN:
+			/* BOOLEAN - ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
+			    default:
 				break;
 			}
 			break;
@@ -473,6 +549,7 @@ evaluate_node(tr_node *self){
 	    case MULTIPLY:
 		switch(left->node_id){
 		    case INT:
+			/* INT * ? */
 			switch(right->node_id){
 			    case INT:
 				result->node_id = INT;
@@ -485,12 +562,16 @@ evaluate_node(tr_node *self){
 			    case VARIABLE:
 				assert(0);
 				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
 			    default:
 				assert(0);
 				break;
 			}
 			break;
 		    case DOUBLE:
+			/* DOUBLE * ? */
 			switch(right->node_id){
 			    case INT:
 				result->node_id = DOUBLE;
@@ -503,16 +584,21 @@ evaluate_node(tr_node *self){
 			    case VARIABLE:
 				assert(0);
 				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
 			    default:
 				assert(0);
 				break;
 			}
 			break;
 		    case VARIABLE:
+			/* VARIABLE * ? */
 			switch(right->node_id){
 			    case INT:
 			    case DOUBLE:
 			    case VARIABLE:
+			    case BOOLEAN:
 				assert(0);
 				break;
 			    default:
@@ -520,6 +606,19 @@ evaluate_node(tr_node *self){
 				break;
 			}
 			break;
+		    case BOOLEAN:
+			/* BOOLEAN * ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
+			    default:
+				assert(0);
+				break;
+			}
 		    default:
 			assert(0);
 			break;
@@ -528,6 +627,7 @@ evaluate_node(tr_node *self){
 	    case DIVIDE:
 		switch(left->node_id){
 		    case INT:
+			/* INT / ? */
 			switch(right->node_id){
 			    case INT:
 				result->node_id = INT;
@@ -540,12 +640,16 @@ evaluate_node(tr_node *self){
 			    case VARIABLE:
 				assert(0);
 				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
 			    default:
 				assert(0);
 				break;
 			}
 			break;
 		    case DOUBLE:
+			/* DOUBLE / ? */
 			switch(right->node_id){
 			    case INT:
 				result->node_id = DOUBLE;
@@ -558,17 +662,35 @@ evaluate_node(tr_node *self){
 			    case VARIABLE:
 				assert(0);
 				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
 			    default:
 				assert(0);
 				break;
 			}
 			break;
 		    case VARIABLE:
+			/* VARIABLE / ? */
 			switch(right->node_id){
 			    case INT:
 			    case DOUBLE:
 			    case VARIABLE:
+			    case BOOLEAN:
 				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+		    case BOOLEAN:
+			/* BOOLEAN / ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
 				break;
 			    default:
 				assert(0);
@@ -583,6 +705,7 @@ evaluate_node(tr_node *self){
 	    case REMAINDER:
 		switch(left->node_id){
 		    case INT:
+			/* INT % ? */
 			switch(right->node_id){
 			    case INT:
 				result->node_id = INT;
@@ -594,12 +717,16 @@ evaluate_node(tr_node *self){
 			    case VARIABLE:
 				assert(0);
 				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
 			    default:
 				assert(0);
 				break;
 			}
 			break;
 		    case DOUBLE:
+			/* DOUBLE % ? */
 			switch(right->node_id){
 			    case INT:
 				/* Evaluation failure. Report an error */
@@ -609,6 +736,9 @@ evaluate_node(tr_node *self){
 				break;
 			    case VARIABLE:
 				assert(0);
+				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
 				break;
 			    default:
 				assert(0);
@@ -616,10 +746,12 @@ evaluate_node(tr_node *self){
 			}
 			break;
 		    case VARIABLE:
+			/* VARIABLE % ? */
 			switch(right->node_id){
 			    case INT:
 			    case DOUBLE:
 			    case VARIABLE:
+			    case BOOLEAN:
 				assert(0);
 				break;
 			    default:
@@ -627,6 +759,19 @@ evaluate_node(tr_node *self){
 				break;
 			}
 			break;
+		    case BOOLEAN:
+			/* BOOLEAN % ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
+			    default:
+				assert(0);
+				break;
+			}
 		    default:
 			assert(0);
 			break;
@@ -635,6 +780,7 @@ evaluate_node(tr_node *self){
 	    case MIN:
 		switch(left->node_id){
 		    case INT:
+			/* min (INT, ? ) */
 			switch(right->node_id){
 			    case INT:
 				result->node_id = INT;
@@ -653,12 +799,16 @@ evaluate_node(tr_node *self){
 			    case VARIABLE:
 				assert(0);
 				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
 			    default:
 				assert(0);
 				break;
 			}
 			break;
 		    case DOUBLE:
+			/* min (DOUBLE, ?) */
 			switch(right->node_id){
 			    case INT:
 				if (left->unv.dval < right->unv.ival){
@@ -677,16 +827,21 @@ evaluate_node(tr_node *self){
 			    case VARIABLE:
 				assert(0);
 				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
 			    default:
 				assert(0);
 				break;
 			}
 			break;
 		    case VARIABLE:
+			/* min (VARIABLE, ?) */
 			switch(right->node_id){
 			    case INT:
 			    case DOUBLE:
 			    case VARIABLE:
+			    case BOOLEAN:
 				assert(0);
 				break;
 			    default:
@@ -694,6 +849,19 @@ evaluate_node(tr_node *self){
 				break;
 			}
 			break;
+		    case BOOLEAN:
+			/* min (BOOLEAN, ?) */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
+			    default:
+				assert(0);
+				break;
+			}
 		    default:
 			assert(0);
 			break;
@@ -702,6 +870,7 @@ evaluate_node(tr_node *self){
 	    case MAX:
 		switch(left->node_id){
 		    case INT:
+			/* max (INT, ?) */
 			switch(right->node_id){
 			    case INT:
 				result->node_id = INT;
@@ -720,12 +889,16 @@ evaluate_node(tr_node *self){
 			    case VARIABLE:
 				assert(0);
 				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
 			    default:
 				assert(0);
 				break;
 			}
 			break;
 		    case DOUBLE:
+			/* max (DOUBLE, ?) */
 			switch(right->node_id){
 			    case INT:
 				if (left->unv.dval > right->unv.ival){
@@ -744,17 +917,130 @@ evaluate_node(tr_node *self){
 			    case VARIABLE:
 				assert(0);
 				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
 			    default:
 				assert(0);
 				break;
 			}
 			break;
 		    case VARIABLE:
+			/* max ( VARIABLE, ?) */
 			switch(right->node_id){
 			    case INT:
 			    case DOUBLE:
 			    case VARIABLE:
+			    case BOOLEAN:
 				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case BOOLEAN:
+			/* max (BOOLEAN, ? ) */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    case POW: /* Not yet implemented */
+		switch(left->node_id){
+		    case INT:
+			/* POW (INT, ?) */
+			break;
+		    case DOUBLE:
+			/* POW (DOUBLE, ?) */
+			break;
+		    case VARIABLE:
+			/* POW (VARIABLE, ?) */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case BOOLEAN:
+			/* POW (BOOLEAN, ?) */
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    case GREATER_THAN_OR_EQUAL_TO:
+		switch(left->node_id){
+		    case INT:
+			/* INT >= ? */
+			switch(right->node_id){
+			    case INT:
+				break;
+			    case DOUBLE:
+				break;
+			    case VARIABLE:
+				break;
+			    case BOOLEAN:
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case DOUBLE:
+			/* DOUBLE >= ? */
+			switch(right->node_id){
+			    case INT:
+				break;
+			    case DOUBLE:
+				break;
+			    case VARIABLE:
+				break;
+			    case BOOLEAN:
+				break;
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case VARIABLE:
+			/* VARIABLE >= ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+			    default:
+				assert(0);
+				break;
+			}
+			break;
+		    case BOOLEAN:
+			/* BOOLEAN >= ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
 				break;
 			    default:
 				assert(0);
@@ -766,23 +1052,133 @@ evaluate_node(tr_node *self){
 			break;
 		}
 		break;
-	    case POW:
+	    case LESS_THAN_OR_EQUAL_TO:
 		switch(left->node_id){
 		    case INT:
+			/* INT <= ? */
 			break;
 		    case DOUBLE:
+			/* DOUBLE <= ? */
 			break;
 		    case VARIABLE:
-			switch(right->node_id){
-			    case INT:
-			    case DOUBLE:
-			    case VARIABLE:
-				assert(0);
-				break;
-			    default:
-				assert(0);
-				break;
-			}
+			/* VARIABLE <= ? */
+			break;
+		    case BOOLEAN:
+			/* BOOLEAN <= ? */
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    case GREATER_THAN:
+		switch(left->node_id){
+		    case INT:
+			/* INT > ? */
+			break;
+		    case DOUBLE:
+			/* DOUBLE > ? */
+			break;
+		    case VARIABLE:
+			/* VARIABLE > ? */
+			break;
+		    case BOOLEAN:
+			/* BOOLEAN > ? */
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    case LESS_THAN:
+		switch(left->node_id){
+		    case INT:
+			/* INT < ? */
+			break;
+		    case DOUBLE:
+			/* DOUBLE < ? */
+			break;
+		    case VARIABLE:
+			/* VARIABLE < ? */
+			break;
+		    case BOOLEAN:
+			/* BOOLEAN < ? */
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    case NEQ:
+		switch(left->node_id){
+		    case INT:
+			/* INT != ? */
+			break;
+		    case DOUBLE:
+			/* DOUBLE != ? */
+			break;
+		    case VARIABLE:
+			/* VARIABLE != ? */
+			break;
+		    case BOOLEAN:
+			/* BOOLEAN != ? */
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    case EQ:
+		switch(left->node_id){
+		    case INT:
+			/* INT = ? */
+			break;
+		    case DOUBLE:
+			/* DOUBLE = ? */
+			break;
+		    case VARIABLE:
+			/* VARIABLE = ? */
+			break;
+		    case BOOLEAN:
+			/* BOOLEAN = ? */
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    case OR:
+		switch(left->node_id){
+		    case INT:
+			/* INT or ? */
+			break;
+		    case DOUBLE:
+			/* DOUBLE or ? */
+			break;
+		    case VARIABLE:
+			/* VARIABLE or ? */
+			break;
+		    case BOOLEAN:
+			/* BOOLEAN or ? */
+			break;
+		    default:
+			assert(0);
+			break;
+		}
+		break;
+	    case AND:
+		switch(left->node_id){
+		    case INT:
+			/* INT and ? */
+			break;
+		    case DOUBLE:
+			/* DOUBLE and ? */
+			break;
+		    case VARIABLE:
+			/* VARIABLE and ? */
+			break;
+		    case BOOLEAN:
+			/* BOOLEAN and ? */
 			break;
 		    default:
 			assert(0);
@@ -792,6 +1188,7 @@ evaluate_node(tr_node *self){
 	    default:
 		assert(0);
 		break;
+
 	}
     }else{
 	/*

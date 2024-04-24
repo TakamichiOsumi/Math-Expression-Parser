@@ -24,6 +24,7 @@
  *  K' ->  L Q K' | $
  *  D  ->  Q L Q
  *  L  ->  AND | OR
+
  *
  * Dollar sign means empty.
  *
@@ -31,16 +32,26 @@
  * the non-terminal symbol must never return error. It should always
  * return success. The way to implement dollar sign is simply return success.
  */
+bool E(void);
 static bool E_dash(void);
 static bool T(void);
 static bool T_dash(void);
 static bool F(void);
 static bool I(void);
 static bool P(void);
+bool Q(void);
 static bool G(void);
+bool S(void);
+static bool S_dash(void);
+static bool J(void);
+static bool J_dash(void);
+static bool K(void);
+static bool K_dash(void);
+static bool D(void);
+static bool L(void);
 
 /* E  -> T E' */
-static bool
+bool
 E(void){
     int CKP;
 
@@ -386,6 +397,243 @@ G(void){
     return false;
 }
 
+bool
+S(void){
+    int CKP;
+
+    CHECKPOINT(CKP);
+
+    do {
+	if (J() == false)
+	    break;
+
+	if (S_dash() == false)
+	    break;
+
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return false;
+}
+
+static bool
+S_dash(void){
+    int token_code, CKP;
+
+    CHECKPOINT(CKP);
+
+    do {
+	if ((token_code = cyylex()) != OR)
+	    break;
+
+	if (J() == false)
+	    break;
+
+	if (S_dash() == false)
+	    break;
+
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return true;
+}
+
+static bool
+J(void){
+    int CKP;
+
+    CHECKPOINT(CKP);
+
+    do {
+	if (K() == false)
+	    break;
+
+	if (J_dash() == false)
+	    break;
+
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return false;
+}
+
+static bool
+J_dash(void){
+    int token_code, CKP;
+
+    CHECKPOINT(CKP);
+
+    do {
+	if ((token_code = cyylex()) != AND)
+	    break;
+
+	if (K() == false)
+	    break;
+
+	if (J_dash() == false)
+	    break;
+
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return true;
+}
+
+static bool
+K(void){
+    int token_code, CKP;
+
+    CHECKPOINT(CKP);
+
+    do {
+	if ((token_code = cyylex()) != BRACKET_START)
+	    break;
+
+	if (S() == false)
+	    break;
+
+	if ((token_code = cyylex()) != BRACKET_END)
+	    break;
+
+	if (K_dash() == false)
+	    break;
+
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    do {
+
+	if (D() == false)
+	    break;
+
+	if (K_dash() == false)
+	    break;
+
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    do {
+
+	if (Q() == false)
+	    break;
+
+	if (L() == false)
+	    break;
+
+	if (K() == false)
+	    break;
+
+	if (K_dash() == false)
+	    break;
+
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return false;
+}
+
+static bool
+K_dash(void){
+    int CKP;
+
+    CHECKPOINT(CKP);
+
+    do {
+
+	if (L() == false)
+	    break;
+
+	if (Q() == false)
+	    break;
+
+	if (K_dash() == false)
+	    break;
+
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return true;
+}
+
+static bool
+D(void){
+    int CKP;
+
+    CHECKPOINT(CKP);
+
+    do {
+
+	if (Q() == false)
+	    break;
+
+	if (L() == false)
+	    break;
+
+	if (Q() == false)
+	    break;
+
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return false;
+}
+
+static bool
+L(void){
+    int token_code, CKP;
+
+    CHECKPOINT(CKP);
+
+    do {
+	if ((token_code = cyylex()) != AND)
+	    break;
+
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    do {
+	if ((token_code = cyylex()) != OR)
+	    break;
+
+	return true;
+
+    } while(0);
+
+    RESTORE_CHECKPOINT(CKP);
+
+    return false;
+}
+
 /*
  * The caller of E()
  */
@@ -416,6 +664,27 @@ start_ineq_mathexpr_parse(){
     int token_code;
 
     parse_result = Q();
+
+    if ((token_code = cyylex()) != PARSER_EOF){
+	return false;
+    }else{
+	if (!parse_result){
+	    return false;
+	}else{
+	    return true;
+	}
+    }
+}
+
+/*
+ * The caller of S()
+ */
+bool
+start_logical_mathexpr_parse(){
+    bool parse_result;
+    int token_code;
+
+    parse_result = S();
 
     if ((token_code = cyylex()) != PARSER_EOF){
 	return false;

@@ -180,13 +180,14 @@ convert_postfix_to_tree(linked_list *postfix_array){
 	if (is_operand(curr->token_code)){
 	    stack_push(node_stack, (void *) trn);
 
-	    /* Create the dll by leaf nodes */
+	    /* Construct the dll by leaf nodes */
 	    if (t->list_head == NULL){
 		prev = t->list_head = trn;
 	    }else{
 		assert(prev != NULL);
 		trn->list_left = prev;
 		prev->list_right = trn;
+		prev = trn;
 	    }
 
 	    /* Lastly, does this tree need the resolution ? */
@@ -210,6 +211,7 @@ convert_postfix_to_tree(linked_list *postfix_array){
     ll_end_iter(postfix_array);
 
     assert((t->root = stack_pop(node_stack)) != NULL);
+
     stack_destroy(node_stack);
 
     return t;
@@ -218,6 +220,11 @@ convert_postfix_to_tree(linked_list *postfix_array){
 void
 evaluate_tree(tree *t){
     tr_node *result;
+
+    if (t->require_resolution && !t->resolved){
+	printf("variable included in expression but not resolved\n");
+	return;
+    }
 
     ll_tmp_calc = ll_init(NULL,
 			  free_dynamic_calculated_node);
@@ -349,6 +356,9 @@ evaluate_node(tr_node *self){
 	result = gen_null_tr_node();
 	left = evaluate_node(self->left);
 	right = evaluate_node(self->right);
+
+	assert(left != NULL);
+	assert(right != NULL);
 
 	switch(self->node_id){
 	    case PLUS:
@@ -811,4 +821,6 @@ resolve_variable(tree *t, void *app_data_src,
 	}
 	n = n->list_right;
     }
+
+    t->resolved = true;
 }

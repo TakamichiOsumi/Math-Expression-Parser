@@ -7,7 +7,7 @@
 #include "PostfixConverter.h"
 #include "MexprTree.h"
 
-lex_stack lstack = { INVALID, { 0, 0, NULL} };
+lex_stack lstack = { INVALID, {{ 0, 0, NULL}} };
 char lex_buffer[BUFFER_LEN];
 char *next_parse_pos = lex_buffer;
 
@@ -141,11 +141,15 @@ parser_stack_reset(void){
 extern bool start_mathexpr_parse();
 extern bool start_ineq_mathexpr_parse();
 
-/* Convert parse results into postfix notation and tree structure */
+/* Convert parse array into postfix notation */
 extern linked_list *convert_infix_to_postfix(lex_data *infix,
 					     int size_in);
+/* Convert the postfix notation into tree */
 extern tree* convert_postfix_to_tree(linked_list *postfix_array);
 
+/* Resolve variable if any */
+void resolve_variable(tree *t, void *app_data_src,
+		      tr_node *(* app_access_cb)(struct variable *, void *));
 /* Evaluate the tree */
 extern void evaluate_tree(tree *t);
 
@@ -255,7 +259,6 @@ test_format_check(char *s){
 static void
 parser_test(bool (*parser)(void),
 	    char **targets, bool expected_result){
-    char last_char;
     int iter = 0;
 
     while (targets[iter]){
@@ -317,33 +320,31 @@ converter_test(bool (*parser)(void),
 static void
 evaluation_test(bool (*parser)(void), char **targets){
     linked_list *postfix_array;
-    node *lln;
-    lex_data *curr;
     tree *t;
     int iter = 0;
 
     while(targets[iter]){
-	  /* Clean up */
-	  parser_stack_reset();
+	/* Clean up */
+	parser_stack_reset();
 
-	  /* Pretest format check */
-	  test_format_check(targets[iter]);
+	/* Pretest format check */
+	test_format_check(targets[iter]);
 
-	  /* Copy the test string to the buffer */
-	  memset(lex_buffer, '\0', BUFFER_LEN);
-	  strncpy(lex_buffer, targets[iter], strlen(targets[iter]));
-	  lex_set_scan_buffer(lex_buffer);
+	/* Copy the test string to the buffer */
+	memset(lex_buffer, '\0', BUFFER_LEN);
+	strncpy(lex_buffer, targets[iter], strlen(targets[iter]));
+	lex_set_scan_buffer(lex_buffer);
 
-	  /* Parse the string */
-	  assert(parser() == true);
-	  postfix_array = convert_infix_to_postfix(lstack.main_data,
-						   lstack.stack_pointer);
-	  /* Convert the postfix array to tree and evaluate it */
-	  t = convert_postfix_to_tree(postfix_array);
-	  evaluate_tree(t);
+	/* Parse the string */
+	assert(parser() == true);
+	postfix_array = convert_infix_to_postfix(lstack.main_data,
+						 lstack.stack_pointer);
+	/* Convert the postfix array to tree and evaluate it */
+	t = convert_postfix_to_tree(postfix_array);
+	evaluate_tree(t);
 
-	  /* Move to the next string */
-	  iter++;
+	/* Move to the next string */
+	iter++;
     }
 }
 
@@ -353,9 +354,15 @@ typedef struct app_data {
     char *val;
 } app_data;
 
+app_data app_array[] = {
+    { .name = "a", .val = "1" },
+    { .name = "b", .val = "3.0" },
+    { .name = "c", .val = "5" },
+    { .name = "d", .val = "-1" },
+};
+
 static tr_node *
 app_fetch_data(variable *v, void *data){
-    int iter = 0;
     app_data *ary = (app_data *) data;
     tr_node *trn = gen_null_tr_node();
 
@@ -380,10 +387,39 @@ app_fetch_data(variable *v, void *data){
 	v->is_resolved = true;
 	v->vdata = trn;
     }else{
+	/* Application should not pass any other name of data */
 	assert(0);
     }
 
     return trn;
+}
+
+static void
+resolve_and_evaluate_test(bool (*parser)(void), char *target){
+    tree *t;
+    linked_list *postfix;
+
+    parser_stack_reset();
+
+    test_format_check(target);
+    memset(lex_buffer, '\0', BUFFER_LEN);
+    strncpy(lex_buffer, target, strlen(target));
+    lex_set_scan_buffer(lex_buffer);
+
+    assert(parser() == true);
+
+    /* Convert parse array into postfix notation */
+    postfix = convert_infix_to_postfix(lstack.main_data,
+				       lstack.stack_pointer);
+
+    /* Convert the postfix notation into tree */
+    t = convert_postfix_to_tree(postfix);
+
+    /* Resolve variable if any */
+    resolve_variable(t, app_array, app_fetch_data);
+
+    /* Evaluate the tree */
+    evaluate_tree(t);
 }
 
 static void
@@ -471,16 +507,9 @@ math_parser_tests(void){
 	NULL,
     };
 
-    /* data source */
-    app_data app_array[] = {
-	{ .name = "a", .val = "1" },
-	{ .name = "b", .val = "3.0" },
-	{ .name = "c", .val = "5" },
-	{ .name = "d", .val = "-1" },
-    };
-
     parser_test(start_mathexpr_parse, success, true);
     parser_test(start_mathexpr_parse, failure, false);
+
     converter_test(start_mathexpr_parse, conversion_test1,
 		   answer1, 3);
     converter_test(start_mathexpr_parse, conversion_test2,
@@ -488,6 +517,12 @@ math_parser_tests(void){
     converter_test(start_mathexpr_parse, conversion_test3,
 		   answer3, 17);
     evaluation_test(start_mathexpr_parse, eval_tests);
+
+    resolve_and_evaluate_test(start_mathexpr_parse, "1 + a\n");
+    resolve_and_evaluate_test(start_mathexpr_parse, "b * c * d\n");
+    resolve_and_evaluate_test(start_mathexpr_parse, "d\n");
+    resolve_and_evaluate_test(start_mathexpr_parse, "min(b, d)\n");
+    resolve_and_evaluate_test(start_mathexpr_parse, "max(b, d)\n");
 }
 
 static void

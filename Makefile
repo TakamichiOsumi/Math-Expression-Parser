@@ -1,5 +1,5 @@
 CC	= gcc
-CFLAGS	= -Wall -O0
+CFLAGS	= -Wall -O0 -g
 
 SUBDIR_STACK	= Stack
 SUBDIR_LIST	= Linked-List
@@ -27,7 +27,7 @@ $(OBJ_SYSTEM_COMPONENTS): libraries
 	for src in $(SYSTEM_COMPONENTS); do $(CC) $(CFLAGS) $$src -c; done
 
 $(MATH_PARSER): $(OBJ_SYSTEM_COMPONENTS)
-	$(CC) $(LIB_STACK) $(LIB_LIST) $(LIBS) -g lex.yy.o $^ -o $@
+	$(CC) $(CFLAGS) $(LIB_STACK) $(LIB_LIST) $(LIBS) -g lex.yy.o $^ -o $@
 
 .phony: clean test
 

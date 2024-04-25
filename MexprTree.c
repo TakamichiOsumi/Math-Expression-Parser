@@ -120,6 +120,8 @@ gen_tr_node_from_lex_data(lex_data *ld){
 	case LESS_THAN:
 	case NEQ:
 	case EQ:
+	case AND:
+	case OR:
 	    n->node_id = ld->token_code;
 	    n->unv.operator = ld->token_val;
 	    break;
@@ -168,7 +170,6 @@ gen_tr_node_from_lex_data(lex_data *ld){
 	    n->unv.vval.is_resolved = false;
 	    n->unv.vval.vdata = NULL;
 	    break;
-
 	default:
 	    assert(0);
 	    break;
@@ -993,12 +994,18 @@ evaluate_node(tr_node *self){
 			/* INT >= ? */
 			switch(right->node_id){
 			    case INT:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.ival >= right->unv.ival;
 				break;
 			    case DOUBLE:
+				result->node_id = BOOLEAN;
+				result->unv.bval = (double) left->unv.ival >= right->unv.dval;
 				break;
 			    case VARIABLE:
+				assert(0);
 				break;
 			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
 				break;
 			    default:
 				assert(0);
@@ -1009,12 +1016,18 @@ evaluate_node(tr_node *self){
 			/* DOUBLE >= ? */
 			switch(right->node_id){
 			    case INT:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.dval >= (double) right->unv.ival;
 				break;
 			    case DOUBLE:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.dval >= right->unv.dval;
 				break;
 			    case VARIABLE:
+				assert(0);
 				break;
 			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
 				break;
 			    default:
 				assert(0);
@@ -1056,15 +1069,77 @@ evaluate_node(tr_node *self){
 		switch(left->node_id){
 		    case INT:
 			/* INT <= ? */
+			switch(right->node_id){
+			    case INT:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.ival <= right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = BOOLEAN;
+				result->unv.bval = (double) left->unv.ival <= right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
+			    default:
+				assert(0);
+				break;
+			}
 			break;
 		    case DOUBLE:
 			/* DOUBLE <= ? */
+			switch(right->node_id){
+			    case INT:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.dval <= (double) right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.dval <= right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
+			    default:
+				assert(0);
+				break;
+			}
 			break;
 		    case VARIABLE:
 			/* VARIABLE <= ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+				assert(0);
+				break;
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
+			    default:
+				assert(0);
+				break;
+			}
 			break;
 		    case BOOLEAN:
 			/* BOOLEAN <= ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				/* Evaluation failure. Report an error */
+				break;
+			    default:
+				assert(0);
+				break;
+			}
 			break;
 		    default:
 			assert(0);
@@ -1131,6 +1206,18 @@ evaluate_node(tr_node *self){
 	    case EQ:
 		switch(left->node_id){
 		    case INT:
+			switch(right->node_id){
+			    case INT:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.ival == right->unv.ival;
+				break;
+			    case DOUBLE:
+				break;
+			    case VARIABLE:
+				break;
+			    case BOOLEAN:
+				break;
+			}
 			/* INT = ? */
 			break;
 		    case DOUBLE:
@@ -1160,6 +1247,19 @@ evaluate_node(tr_node *self){
 			break;
 		    case BOOLEAN:
 			/* BOOLEAN or ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+				break;
+			    case BOOLEAN:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.bval ||
+				    right->unv.bval;
+				break;
+			    default:
+				break;
+			}
 			break;
 		    default:
 			assert(0);
@@ -1179,6 +1279,18 @@ evaluate_node(tr_node *self){
 			break;
 		    case BOOLEAN:
 			/* BOOLEAN and ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+				/* Evaluation failure. Report an error */
+				break;
+			    case BOOLEAN:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.bval &&
+				    right->unv.bval;
+				break;
+			}
 			break;
 		    default:
 			assert(0);

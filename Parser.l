@@ -394,11 +394,16 @@ static void
 resolve_and_evaluate_test(bool (*parser)(void), char *target){
     tree *t;
     linked_list *postfix;
+    bool result;
 
     /* Prepare the test */
     init_buffer(target);
 
-    assert(parser() == true);
+    result = parser();
+    if (result != true){
+	printf("'%s' was not correctly parsed\n", target);
+	exit(-1);
+    }
 
     /* Convert parse array into postfix notation */
     postfix = convert_infix_to_postfix(lstack.main_data,
@@ -557,16 +562,20 @@ ineq_parser_tests(void){
 static void
 logical_parser_tests(void){
     char *logical_success[] = {
-	"TRUE\n",
-	"FALSE\n",
-	"1 < 2\n",
+	"1 <= 2\n",
 	"3.0 <= 5.0\n",
+	"1 <= 2 and 3.0 <= 5.0\n",
+	"2 = 2\n",
     };
 
-    resolve_and_evaluate_test(start_logical_mathexpr_parse,
+    resolve_and_evaluate_test(start_ineq_mathexpr_parse,
 			      logical_success[0]);
-    resolve_and_evaluate_test(start_logical_mathexpr_parse,
+    resolve_and_evaluate_test(start_ineq_mathexpr_parse,
 			      logical_success[1]);
+    resolve_and_evaluate_test(start_logical_mathexpr_parse,
+			      logical_success[2]);
+    resolve_and_evaluate_test(start_ineq_mathexpr_parse,
+			      logical_success[3]);
 }
 
 static void
@@ -576,7 +585,7 @@ execute_full_parser_tests(){
     /* Inequality expression */
     ineq_parser_tests();
     /* Logical expression (Not supported yet) */
-    /* logical_parser_tests(); */
+    logical_parser_tests();
 }
 
 int

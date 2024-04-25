@@ -16,6 +16,7 @@
  *  I  ->  = | != | < | > | <= | >=
  *  P  ->  SIN | COS | SQR | SQRT
  *  G  ->  MAX | MIN | POW
+ *
  *  S  ->  J S'
  *  S' ->  OR J S' | $
  *  J  ->  K J'
@@ -24,7 +25,6 @@
  *  K' ->  L Q K' | $
  *  D  ->  Q L Q
  *  L  ->  AND | OR
-
  *
  * Dollar sign means empty.
  *
@@ -397,6 +397,7 @@ G(void){
     return false;
 }
 
+/* S -> J S' */
 bool
 S(void){
     int CKP;
@@ -419,6 +420,7 @@ S(void){
     return false;
 }
 
+/* S' -> OR J S' | $ */
 static bool
 S_dash(void){
     int token_code, CKP;
@@ -441,9 +443,12 @@ S_dash(void){
 
     RESTORE_CHECKPOINT(CKP);
 
+    /* $ sign */
+
     return true;
 }
 
+/* J -> K J' */
 static bool
 J(void){
     int CKP;
@@ -466,6 +471,7 @@ J(void){
     return false;
 }
 
+/* J' ->  AND K J' | $ */
 static bool
 J_dash(void){
     int token_code, CKP;
@@ -488,6 +494,8 @@ J_dash(void){
 
     RESTORE_CHECKPOINT(CKP);
 
+    /* $ sign */
+
     return true;
 }
 
@@ -497,6 +505,7 @@ K(void){
 
     CHECKPOINT(CKP);
 
+    /* K -> ( S ) K' */
     do {
 	if ((token_code = cyylex()) != BRACKET_START)
 	    break;
@@ -516,6 +525,7 @@ K(void){
 
     RESTORE_CHECKPOINT(CKP);
 
+    /* K -> D K' */
     do {
 
 	if (D() == false)
@@ -530,6 +540,7 @@ K(void){
 
     RESTORE_CHECKPOINT(CKP);
 
+    /* K -> Q L K K' */
     do {
 
 	if (Q() == false)
@@ -553,6 +564,7 @@ K(void){
     return false;
 }
 
+/* K' -> L Q K' | $ */
 static bool
 K_dash(void){
     int CKP;
@@ -576,9 +588,12 @@ K_dash(void){
 
     RESTORE_CHECKPOINT(CKP);
 
+    /* $ sign */
+
     return true;
 }
 
+/* D  ->  Q L Q */
 static bool
 D(void){
     int CKP;
@@ -605,6 +620,7 @@ D(void){
     return false;
 }
 
+/* L -> AND | OR */
 static bool
 L(void){
     int token_code, CKP;

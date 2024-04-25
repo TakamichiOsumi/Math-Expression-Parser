@@ -12,12 +12,10 @@ LIBS	= -ll -lstack -llinked_list
 OUTPUT_LIB	= libmexpr.a
 TEST_APP	= exec_application
 
-MATH_PARSER	= exec_math_parser
-
 SYSTEM_COMPONENTS	= MexprEnums.c MathExpression.c PostfixConverter.c MexprTree.c
 OBJ_SYSTEM_COMPONENTS	= MexprEnums.o MathExpression.o PostfixConverter.o MexprTree.o
 
-all: libraries lex.yy.o $(MATH_PARSER) $(OUTPUT_LIB) $(TEST_APP)
+all: libraries lex.yy.o $(OUTPUT_LIB) $(TEST_APP)
 
 libraries:
 	for dir in $(SUBDIRS); do make -C $$dir; done
@@ -29,9 +27,6 @@ lex.yy.o:
 $(OBJ_SYSTEM_COMPONENTS): libraries
 	for src in $(SYSTEM_COMPONENTS); do $(CC) $(CFLAGS) $$src -c; done
 
-$(MATH_PARSER): $(OBJ_SYSTEM_COMPONENTS)
-	$(CC) $(CFLAGS) $(LIB_STACK) $(LIB_LIST) $(LIBS) -g lex.yy.o $^ -o $@
-
 $(OUTPUT_LIB): $(OBJ_SYSTEM_COMPONENTS)
 	ar rcs $(OUTPUT_LIB) lex.yy.o $^
 
@@ -41,8 +36,8 @@ $(TEST_APP): $(OUTPUT_LIB)
 .phony: clean test
 
 clean:
-	rm -rf *.o lex.yy.c $(MATH_PARSER) $(OUTPUT_LIB) $(TEST_APP)
+	rm -rf *.o lex.yy.c $(OUTPUT_LIB) $(TEST_APP)
 	for dir in $(SUBDIRS); do cd $$dir; make clean; cd ..; done
 
-test: lex.yy.o $(MATH_PARSER)
-	@./$(MATH_PARSER) &> /dev/null && echo "Success when the return value is zero >>> $$?"
+test: lex.yy.o $(TEST_APP)
+	@./$(TEST_APP) &> /dev/null && echo "Success when the return value is zero >>> $$?"

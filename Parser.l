@@ -350,48 +350,9 @@ typedef struct app_data {
     char *val;
 } app_data;
 
-app_data app_array[] = {
-    { .name = "a", .val = "1" },
-    { .name = "b", .val = "3.0" },
-    { .name = "c", .val = "5" },
-    { .name = "d", .val = "-1" },
-};
-
-static tr_node *
-app_fetch_data(variable *v, void *data){
-    app_data *ary = (app_data *) data;
-    tr_node *trn = gen_null_tr_node();
-
-    if (strncmp(v->vname, "a", strlen("a")) == 0){
-	trn->node_id = INT;
-	trn->unv.ival = strtol(ary[0].val, (char **) NULL, 10);
-	v->is_resolved = true;
-	v->vdata = trn;
-    }else if (strncmp(v->vname, "b", strlen("b")) == 0){
-	trn->node_id = DOUBLE;
-	trn->unv.dval = strtod(ary[1].val, (char **) NULL);
-	v->is_resolved = true;
-	v->vdata = trn;
-    }else if (strncmp(v->vname, "c", strlen("c")) == 0){
-	trn->node_id = INT;
-	trn->unv.ival = strtol(ary[2].val, (char **) NULL, 10);
-	v->is_resolved = true;
-	v->vdata = trn;
-    }else if (strncmp(v->vname, "d", strlen("d")) == 0){
-	trn->node_id = INT;
-	trn->unv.ival = strtol(ary[3].val, (char **) NULL, 10);
-	v->is_resolved = true;
-	v->vdata = trn;
-    }else{
-	/* Application should not pass any other name of data */
-	assert(0);
-    }
-
-    return trn;
-}
-
-static void
-resolve_and_evaluate_test(bool (*parser)(void), char *target){
+void
+resolve_and_evaluate_test(bool (*parser)(void), char *target, void *app_data_src,
+			  tr_node *(*app_access_cb)(struct variable *, void *)){
     tree *t;
     linked_list *postfix;
     bool result;
@@ -413,7 +374,7 @@ resolve_and_evaluate_test(bool (*parser)(void), char *target){
     t = convert_postfix_to_tree(postfix);
 
     /* Resolve variable if any */
-    resolve_variable(t, app_array, app_fetch_data);
+    resolve_variable(t, app_data_src, app_access_cb);
 
     /* Evaluate the tree */
     evaluate_tree(t);
@@ -515,6 +476,7 @@ math_parser_tests(void){
 		   answer3, 17);
     evaluation_test(start_mathexpr_parse, eval_tests);
 
+    /*
     resolve_and_evaluate_test(start_mathexpr_parse, "a\n");
     resolve_and_evaluate_test(start_mathexpr_parse, "b\n");
     resolve_and_evaluate_test(start_mathexpr_parse, "c\n");
@@ -524,6 +486,7 @@ math_parser_tests(void){
     resolve_and_evaluate_test(start_mathexpr_parse, "min(b, d)\n");
     resolve_and_evaluate_test(start_mathexpr_parse, "max(b, d)\n");
     resolve_and_evaluate_test(start_mathexpr_parse, "sqr(c)\n");
+    */
 }
 
 static void
@@ -561,6 +524,7 @@ ineq_parser_tests(void){
 
 static void
 logical_parser_tests(void){
+    /*
     char *logical_success[] = {
 	"1 <= 2\n",
 	"3.0 <= 5.0\n",
@@ -576,6 +540,7 @@ logical_parser_tests(void){
 			      logical_success[2]);
     resolve_and_evaluate_test(start_ineq_mathexpr_parse,
 			      logical_success[3]);
+    */
 }
 
 static void
@@ -584,10 +549,11 @@ execute_full_parser_tests(){
     math_parser_tests();
     /* Inequality expression */
     ineq_parser_tests();
-    /* Logical expression (Not supported yet) */
+    /* Logical expression (Partly supported) */
     logical_parser_tests();
 }
 
+/*
 int
 main(int argc, char **argv){
 
@@ -597,3 +563,4 @@ main(int argc, char **argv){
 
     return 0;
 }
+*/

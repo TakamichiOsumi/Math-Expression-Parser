@@ -2,6 +2,7 @@
 #define __MATH_EXPR_TREE__
 
 #include <stdbool.h>
+#include "Linked-List/linked_list.h"
 
 typedef struct tr_node tr_node;
 

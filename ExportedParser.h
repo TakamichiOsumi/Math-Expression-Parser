@@ -4,7 +4,9 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include "Linked-List/linked_list.h"
 #include "MexprEnums.h"
+#include "MexprTree.h"
 
 /* Stack the parsed results */
 #define MAX_STACK_INDEX 512
@@ -39,5 +41,12 @@ extern void parser_stack_reset(void);
     { checkpoint_index = lstack.stack_pointer; }
 #define RESTORE_CHECKPOINT(checkpoint_index) \
     { yyrewind(lstack.stack_pointer - checkpoint_index); }
+
+extern bool start_mathexpr_parse();
+extern bool start_ineq_mathexpr_parse();
+extern bool start_logical_mathexpr_parse();
+
+void resolve_and_evaluate_test(bool (*parser)(void), char *target, void *app_data_src,
+			       tr_node *(*app_access_cb)(struct variable *, void *));
 
 #endif

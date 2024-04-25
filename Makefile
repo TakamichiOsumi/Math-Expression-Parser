@@ -9,12 +9,15 @@ LIB_STACK	= -L $(CURDIR)/$(SUBDIR_STACK)
 LIB_LIST	= -L $(CURDIR)/$(SUBDIR_LIST)
 LIBS	= -ll -lstack -llinked_list
 
+OUTPUT_LIB	= libmexpr.a
+TEST_APP	= exec_application
+
 MATH_PARSER	= exec_math_parser
 
 SYSTEM_COMPONENTS	= MexprEnums.c MathExpression.c PostfixConverter.c MexprTree.c
 OBJ_SYSTEM_COMPONENTS	= MexprEnums.o MathExpression.o PostfixConverter.o MexprTree.o
 
-all: libraries lex.yy.o $(MATH_PARSER)
+all: libraries lex.yy.o $(MATH_PARSER) $(OUTPUT_LIB) $(TEST_APP)
 
 libraries:
 	for dir in $(SUBDIRS); do make -C $$dir; done
@@ -29,10 +32,16 @@ $(OBJ_SYSTEM_COMPONENTS): libraries
 $(MATH_PARSER): $(OBJ_SYSTEM_COMPONENTS)
 	$(CC) $(CFLAGS) $(LIB_STACK) $(LIB_LIST) $(LIBS) -g lex.yy.o $^ -o $@
 
+$(OUTPUT_LIB): $(OBJ_SYSTEM_COMPONENTS)
+	ar rcs $(OUTPUT_LIB) lex.yy.o $^
+
+$(TEST_APP): $(OUTPUT_LIB)
+	$(CC)  -L . $(LIB_STACK) $(LIB_LIST) -ll -lmexpr -lstack -llinked_list  application.c -o $(TEST_APP)
+
 .phony: clean test
 
 clean:
-	rm -rf *.o lex.yy.c $(MATH_PARSER)
+	rm -rf *.o lex.yy.c $(MATH_PARSER) $(OUTPUT_LIB) $(TEST_APP)
 	for dir in $(SUBDIRS); do cd $$dir; make clean; cd ..; done
 
 test: lex.yy.o $(MATH_PARSER)

@@ -1315,18 +1315,23 @@ evaluate_node(tr_node *self){
 void
 resolve_variable(tree *t, void *app_data_src,
 		 tr_node *(*app_access_cb)(struct variable *, void *)){
-    tr_node *n;
+    tr_node *n, *tmp;
     variable *v;
 
     assert(t != NULL);
     assert(t->list_head != NULL);
+
+    if (app_data_src == NULL || app_access_cb == NULL)
+	return;
 
     n = t->list_head;
 
     while(n != NULL){
 	if (n->node_id == VARIABLE){
 	    v = &n->unv.vval;
-	    app_access_cb(v, app_data_src);
+	    tmp = app_access_cb(v, app_data_src);
+	    v->is_resolved = true;
+	    v->vdata = tmp;
 	}
 	n = n->list_right;
     }

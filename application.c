@@ -24,23 +24,15 @@ app_fetch_data(variable *v, void *data){
     if (strncmp(v->vname, "a", strlen("a")) == 0){
 	trn->node_id = INT;
 	trn->unv.ival = strtol(ary[0].val, (char **) NULL, 10);
-	v->is_resolved = true;
-	v->vdata = trn;
     }else if (strncmp(v->vname, "b", strlen("b")) == 0){
 	trn->node_id = DOUBLE;
 	trn->unv.dval = strtod(ary[1].val, (char **) NULL);
-	v->is_resolved = true;
-	v->vdata = trn;
     }else if (strncmp(v->vname, "c", strlen("c")) == 0){
 	trn->node_id = INT;
 	trn->unv.ival = strtol(ary[2].val, (char **) NULL, 10);
-	v->is_resolved = true;
-	v->vdata = trn;
     }else if (strncmp(v->vname, "d", strlen("d")) == 0){
 	trn->node_id = INT;
 	trn->unv.ival = strtol(ary[3].val, (char **) NULL, 10);
-	v->is_resolved = true;
-	v->vdata = trn;
     }else{
 	/* Application should not pass any other name of data */
 	assert(0);
@@ -54,10 +46,10 @@ main(int argc, char **argv){
 
     resolve_and_evaluate_test(start_mathexpr_parse,
 			      "((1 + 2) - 3) * 4 / (5 / 6) + (7 - 8) \n",
-			      app_array, app_fetch_data);
+			      NULL, NULL);
     resolve_and_evaluate_test(start_mathexpr_parse,
 			      "sqr(3) + min(10, 0) + sqrt(25.0)\n",
-			      app_array, app_fetch_data);
+			      NULL, NULL);
     resolve_and_evaluate_test(start_ineq_mathexpr_parse,
 			      "a <= 100\n", app_array, app_fetch_data);
     resolve_and_evaluate_test(start_ineq_mathexpr_parse,

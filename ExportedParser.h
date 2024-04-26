@@ -21,20 +21,10 @@ typedef struct lex_stack {
     lex_data main_data[MAX_STACK_INDEX];
 } lex_stack;
 
+/* Manipulate lex_stack. Exported for expression rules */
 extern lex_stack lstack;
-
-/* Parse inputs */
-#define BUFFER_LEN 512
-extern char lex_buffer[BUFFER_LEN];
-extern char *next_parse_pos;
-
-#define STRING_IS_NEWLINE(s) \
-    (s != NULL && (strncmp(s, "\n", strlen("\n")) == 0))
-
-/* Manage lex_stack */
 extern int cyylex();
 extern void yyrewind(int n);
-extern void parser_stack_reset(void);
 
 /* The caller must declare and pass one variable for below macros */
 #define CHECKPOINT(checkpoint_index) \
@@ -42,9 +32,12 @@ extern void parser_stack_reset(void);
 #define RESTORE_CHECKPOINT(checkpoint_index) \
     { yyrewind(lstack.stack_pointer - checkpoint_index); }
 
+extern void init_buffer(char *target);
+extern bool parsed_format_validation(char *s);
 extern bool start_mathexpr_parse();
 extern bool start_ineq_mathexpr_parse();
 extern bool start_logical_mathexpr_parse();
+extern linked_list *convert_infix_to_postfix(lex_data *infix, int size_in);
 
 void resolve_and_evaluate_test(bool (*parser)(void), char *target, void *app_data_src,
 			       tr_node *(*app_access_cb)(struct variable *, void *));

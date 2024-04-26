@@ -1312,14 +1312,37 @@ evaluate_node(tr_node *self){
     return result;
 }
 
+/* The minimum necessary tests */
+static bool
+is_invalid_tr_node(tr_node *trn){
+    if (trn == NULL)
+	return true; /* invalid */
+
+    if (trn->node_id == INT
+	|| trn->node_id == DOUBLE
+	|| trn->node_id == BOOLEAN)
+	return false;
+    else
+	return true; /* invalid */
+}
+
+/*
+ * Resolve variables based on 'app_data_src' and 'app_access_cb'.
+ *
+ * The caller must avoid evaluation if 'resolution_failed' is set to true.
+ * It means user application returned something wrong.
+ */
 void
 resolve_variable(tree *t, void *app_data_src,
-		 tr_node *(*app_access_cb)(struct variable *, void *)){
+		 tr_node *(*app_access_cb)(char *, void *),
+		 bool *resolution_failed){
     tr_node *n, *tmp;
     variable *v;
 
     assert(t != NULL);
     assert(t->list_head != NULL);
+
+    *resolution_failed = false;
 
     if (app_data_src == NULL || app_access_cb == NULL)
 	return;
@@ -1329,9 +1352,14 @@ resolve_variable(tree *t, void *app_data_src,
     while(n != NULL){
 	if (n->node_id == VARIABLE){
 	    v = &n->unv.vval;
-	    tmp = app_access_cb(v, app_data_src);
-	    v->is_resolved = true;
-	    v->vdata = tmp;
+
+	    tmp = app_access_cb(v->vname, app_data_src);
+	    if (is_invalid_tr_node(tmp))
+		*resolution_failed = true;
+	    else{
+		v->is_resolved = true;
+		v->vdata = tmp;
+	    }
 	}
 	n = n->list_right;
     }

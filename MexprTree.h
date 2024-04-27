@@ -15,6 +15,8 @@ typedef struct tr_node tr_node;
  * each VARIABLE fetches its data provided by application
  * side. Application needs to give two pieces of information,
  * 'app_data_src' and 'app_access_cb' for that purpose.
+ *
+ * See the detail in resolve_variable().
  */
 typedef struct variable {
     char *vname;
@@ -24,7 +26,6 @@ typedef struct variable {
 
     /* Not null when the resolution has ended */
     tr_node *vdata;
-
 } variable;
 
 typedef union node_value {
@@ -49,9 +50,13 @@ typedef union node_value {
 } node_value;
 
 typedef struct tr_node {
+    /*
+     * Previously 'token_id' but renamed in accordance
+     * with the purpose.
+     */
     int node_id;
 
-    /* This 'unv' represents union value */
+    /* This 'unv' represents "union value" */
     union node_value unv;
 
     /* Refer to the other operand or operator */

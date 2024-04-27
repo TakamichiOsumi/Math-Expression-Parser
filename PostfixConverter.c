@@ -17,6 +17,7 @@ stack_top_token_code(stack *s){
 }
 
 /* for debug */
+/*
 static void
 print_infix_lex_data(lex_data *infix, int size_in){
     lex_data *curr;
@@ -31,6 +32,7 @@ print_infix_lex_data(lex_data *infix, int size_in){
     }
     printf("\n");
 }
+*/
 
 /* for debug */
 static void

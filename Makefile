@@ -31,7 +31,7 @@ $(OUTPUT_LIB): $(OBJ_SYSTEM_COMPONENTS)
 	ar rcs $(OUTPUT_LIB) lex.yy.o $^
 
 $(TEST_APP): $(OUTPUT_LIB)
-	$(CC)  -L . $(LIB_STACK) $(LIB_LIST) -ll -lmexpr -lstack -llinked_list  application.c -o $(TEST_APP)
+	$(CC)  -L . $(LIB_STACK) $(LIB_LIST) $(LIBS) -lmexpr application.c -o $(TEST_APP)
 
 .phony: clean test
 

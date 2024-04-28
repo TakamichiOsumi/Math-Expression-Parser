@@ -87,7 +87,7 @@ app_resolve_and_evaluate_test(bool (*parser)(void), char *target,
 			      void *app_data_src, tr_node *(*app_access_cb)(char *, void *)){
     tree *t;
     linked_list *postfix;
-    bool parse_ret = false, resolve_failed = false;
+    bool parse_ret = false;
 
     /* Prepare the test */
     init_buffer(target);
@@ -106,15 +106,10 @@ app_resolve_and_evaluate_test(bool (*parser)(void), char *target,
     t = convert_postfix_to_tree(postfix);
 
     /* Resolve variable if any */
-    resolve_variable(t, app_data_src, app_access_cb, &resolve_failed);
+    resolve_variable(t, app_data_src, app_access_cb);
 
     /* Evaluate the tree */
-    if (!resolve_failed)
-	evaluate_tree(t);
-    else{
-	printf("detected invalid tree node from application callback\n");
-	exit(-1);
-    }
+    evaluate_tree(t);
 }
 
 static void
@@ -274,6 +269,7 @@ typedef struct app_data {
     char *val;
 } app_data;
 
+/* Application data source */
 app_data app_array[] = {
     { .name = "a", .val = "1" },
     { .name = "b", .val = "3.0" },
@@ -281,6 +277,7 @@ app_data app_array[] = {
     { .name = "d", .val = "-1" },
 };
 
+/* Application callback */
 static tr_node *
 app_fetch_data(char *s, void *data){
     app_data *ary = (app_data *) data;
@@ -306,15 +303,8 @@ app_fetch_data(char *s, void *data){
     return trn;
 }
 
-int
-main(int argc, char **argv){
-    /* Math expression */
-    app_math_parser_tests();
-    /* Inequality expression */
-    app_ineq_parser_tests();
-    /* Logical expression (Partly supported) */
-    app_logical_parser_tests();
-
+void
+app_var_resolve_tests(){
     app_resolve_and_evaluate_test(start_mathexpr_parse,
 				  "((1 + 2) - 3) * 4 / (5 / 6) + (7 - 8) \n",
 				  NULL, NULL);
@@ -333,6 +323,18 @@ main(int argc, char **argv){
 				  "a <= 100\n", app_array, app_fetch_data);
     app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
 				  "b <= c\n", app_array, app_fetch_data);
+}
+
+int
+main(int argc, char **argv){
+    /* Math expression */
+    app_math_parser_tests();
+    /* Inequality expression */
+    app_ineq_parser_tests();
+    /* Logical expression (Partly supported) */
+    app_logical_parser_tests();
+    /* Variable resolution */
+    app_var_resolve_tests();
 
     return 0;
 }

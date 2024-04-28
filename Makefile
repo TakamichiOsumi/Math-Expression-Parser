@@ -12,8 +12,8 @@ LIBS	= -ll -lstack -llinked_list
 OUTPUT_LIB	= libmexpr.a
 TEST_APP	= exec_application
 
-SYSTEM_COMPONENTS	= MexprEnums.c MathExpression.c PostfixConverter.c MexprTree.c
-OBJ_SYSTEM_COMPONENTS	= MexprEnums.o MathExpression.o PostfixConverter.o MexprTree.o
+SYSTEM_COMPONENTS	= MexprEnums.c MathExpression.c MexprTree.c
+OBJ_SYSTEM_COMPONENTS	= MexprEnums.o MathExpression.o MexprTree.o
 
 all: libraries lex.yy.o $(OUTPUT_LIB) $(TEST_APP)
 

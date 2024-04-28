@@ -4,10 +4,8 @@
 #include <assert.h>
 #include <stdbool.h>
 #include "ExportedParser.h"
-#include "PostfixConverter.h"
+#include "Stack/stack.h"
 #include "MexprTree.h"
-
-#define BUFFER_LEN 512
 
 lex_stack lstack = { INVALID, {{ 0, 0, NULL}} };
 static char lex_buffer[BUFFER_LEN];
@@ -17,6 +15,16 @@ static char *next_parse_pos = lex_buffer;
 void
 lex_set_scan_buffer(const char *buffer){
     yy_scan_string(buffer);
+}
+
+/*
+ * function for expression.
+ *
+ * Close access to the lstack from other files.
+ */
+int
+lex_stack_pointer(void){
+    return lstack.stack_pointer;
 }
 
 static void
@@ -261,4 +269,91 @@ yyrewind(int n){
      * to parse.
      */
     yy_scan_string(next_parse_pos);
+}
+
+/*
+ * Prefixed like it's one part of stack library, since
+ * this makes convert_infix_to_postfix() easier to read.
+ */
+static int
+stack_top_token_code(stack *s){
+    lex_data *top;
+
+    assert(!stack_is_empty(s));
+
+    top = (lex_data *) stack_top(s);
+
+    return top->token_code;
+}
+
+static void
+print_postfix_list(linked_list *postfix){
+    lex_data *curr;
+    node *n;
+
+    printf("---- <Postfix> ----\n");
+    ll_begin_iter(postfix);
+    while((n = ll_get_iter_node(postfix)) != NULL){
+	curr = (lex_data *) n->data;
+	printf("%s ", curr->token_val);
+    }
+    ll_end_iter(postfix);
+    printf("\n");
+}
+
+linked_list *
+convert_infix_to_postfix(lex_data *infix, int size_in){
+    linked_list *postfix;
+    lex_data *curr;
+    stack *s;
+    int iter;
+
+    s = stack_init(size_in);
+    postfix = ll_init(NULL, NULL);
+
+    for (iter = 0; iter < size_in; iter++){
+	curr = &infix[iter];
+
+	if (is_skipped_token(curr->token_code))
+	    continue;
+
+	if (is_operand(curr->token_code)){
+	    ll_tail_insert(postfix, (void *) curr);
+	}else if (curr->token_code == BRACKET_START){
+	    stack_push(s, curr);
+	}else if (is_operator(curr->token_code)){
+	    while(!stack_is_empty(s) &&
+		  !is_unary_operator(curr->token_code) &&
+		  (operator_precedence(curr->token_code) <=
+		   operator_precedence(stack_top_token_code(s))))
+		ll_tail_insert(postfix, stack_pop(s));
+
+	    stack_push(s, curr);
+	}else if (curr->token_code == BRACKET_END){
+	    while(!stack_is_empty(s) &&
+		  stack_top_token_code(s) != BRACKET_START)
+		ll_tail_insert(postfix, stack_pop(s));
+
+	    (void) stack_pop(s);
+
+	    while(!stack_is_empty(s)){
+		if (is_unary_operator(stack_top_token_code(s))){
+		    ll_tail_insert(postfix, (void *) stack_pop(s));
+		    continue;
+		}
+		break;
+	    }
+	}else if (curr->token_code == COMMA){
+	    while(!stack_is_empty(s) &&
+		  stack_top_token_code(s) != BRACKET_START)
+		ll_tail_insert(postfix, (void *) stack_pop(s));
+	}
+    }
+
+    while(!stack_is_empty(s))
+	ll_tail_insert(postfix, (void *) stack_pop(s));
+
+    print_postfix_list(postfix);
+
+    return postfix;
 }

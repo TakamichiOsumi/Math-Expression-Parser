@@ -7,6 +7,8 @@
 /*
  * The production rules for math expression that avoid left recursion :
  *
+ * <Arithmetic Operations>, <Supported Math Functions> and <Inequality Operators>.
+ *
  *  E  ->  T E'
  *  E' ->  + T E' | - T E' | $
  *  T  ->  F T'
@@ -16,6 +18,8 @@
  *  I  ->  = | != | < | > | <= | >=
  *  P  ->  SIN | COS | SQR | SQRT
  *  G  ->  MAX | MIN | POW
+ *
+ * <Logical Operators>
  *
  *  S  ->  J S'
  *  S' ->  OR J S' | $

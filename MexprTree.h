@@ -86,15 +86,17 @@ typedef struct tree {
      */
     bool require_resolution;
 
-    /* True if the resolution is conducted */
+    /*
+     * True if the resolution is conducted. If any variable
+     * resolution looks invalid, then this won't be true.
+     */
     bool resolved;
 } tree;
 
 void evaluate_tree(tree *t);
 tr_node *gen_null_tr_node(void);
-tree* convert_postfix_to_tree(linked_list *postfix_array);
+tree* convert_postfix_to_tree(linked_list *postfix);
 void resolve_variable(tree *t, void *app_data_src,
-		      tr_node *(* app_access_cb)(char *, void *),
-		      bool *resolution_failed);
+		      tr_node *(* app_access_cb)(char *, void *));
 
 #endif

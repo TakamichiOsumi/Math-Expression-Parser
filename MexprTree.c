@@ -183,16 +183,16 @@ gen_tr_node_from_lex_data(lex_data *ld){
  * with tree's 'list_left' and 'list_right' variables.
  */
 tree*
-convert_postfix_to_tree(linked_list *postfix_array){
-    stack *node_stack = stack_init(ll_get_length(postfix_array));
+convert_postfix_to_tree(linked_list *postfix){
+    stack *node_stack = stack_init(ll_get_length(postfix));
     node *lln;
     lex_data *curr;
     tr_node *trn, *prev;
     tree *t = gen_tree();
 
-    ll_begin_iter(postfix_array);
+    ll_begin_iter(postfix);
 
-    while((lln = ll_get_iter_node(postfix_array)) != NULL){
+    while((lln = ll_get_iter_node(postfix)) != NULL){
 	curr = (lex_data *) lln->data;
 	trn = gen_tr_node_from_lex_data(curr);
 
@@ -227,7 +227,7 @@ convert_postfix_to_tree(linked_list *postfix_array){
 	}
     }
 
-    ll_end_iter(postfix_array);
+    ll_end_iter(postfix);
 
     assert((t->root = stack_pop(node_stack)) != NULL);
 
@@ -1329,20 +1329,20 @@ is_invalid_tr_node(tr_node *trn){
 /*
  * Resolve variables based on 'app_data_src' and 'app_access_cb'.
  *
- * The caller must avoid evaluation if 'resolution_failed' is set to true.
- * It means user application returned something wrong.
+ * The caller must avoid evaluation if 't->resolved' is set to false.
+ *
+ * It means either user didn't call this function even when the expression
+ * includes variable or user-defined callback returned something wrong.
  */
 void
 resolve_variable(tree *t, void *app_data_src,
-		 tr_node *(*app_access_cb)(char *, void *),
-		 bool *resolution_failed){
+		 tr_node *(*app_access_cb)(char *, void *)){
     tr_node *n, *tmp;
     variable *v;
+    bool contain_illegal_var = false;
 
     assert(t != NULL);
     assert(t->list_head != NULL);
-
-    *resolution_failed = false;
 
     if (app_data_src == NULL || app_access_cb == NULL)
 	return;
@@ -1355,7 +1355,7 @@ resolve_variable(tree *t, void *app_data_src,
 
 	    tmp = app_access_cb(v->vname, app_data_src);
 	    if (is_invalid_tr_node(tmp))
-		*resolution_failed = true;
+		contain_illegal_var = true;
 	    else{
 		v->is_resolved = true;
 		v->vdata = tmp;
@@ -1364,5 +1364,6 @@ resolve_variable(tree *t, void *app_data_src,
 	n = n->list_right;
     }
 
-    t->resolved = true;
+    if (!contain_illegal_var)
+	t->resolved = true;
 }

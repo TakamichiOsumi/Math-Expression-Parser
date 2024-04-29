@@ -31,6 +31,7 @@ extern lex_stack lstack;
 extern int cyylex();
 extern void yyrewind(int n);
 extern int lex_stack_pointer(void);
+extern void parser_stack_reset(void);
 #define CHECKPOINT(checkpoint_index) \
     { checkpoint_index = lex_stack_pointer(); }
 #define RESTORE_CHECKPOINT(checkpoint_index) \

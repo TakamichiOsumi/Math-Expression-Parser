@@ -60,7 +60,7 @@ process_white_space_or_tab(int type, int n){
     lex_push(ldata);
 }
 
-static void
+void
 parser_stack_reset(void){
     int i, removed_string_len = 0;
     lex_data *ldata;

@@ -35,22 +35,21 @@ static void
 app_converter_test(bool (*parser)(void), char *target,
 		   char **answer, int answer_length){
     int i;
-    linked_list *postfix_array;
-    node *lln;
+    linked_list *postfix;
     lex_data *curr;
 
     init_buffer(target);
 
     assert(parser() == true);
 
-    postfix_array = convert_infix_to_postfix(lstack.main_data,
-					     lstack.stack_pointer);
+    postfix = convert_infix_to_postfix(lstack.main_data,
+				       lstack.stack_pointer);
 
-    assert(ll_get_length(postfix_array) == answer_length);
+    assert(ll_get_length(postfix) == answer_length);
 
     for (i = 0; i < answer_length; i++){
-	lln = ll_get_first_node(postfix_array);
-	curr = (lex_data *) lln->data;
+	curr = (lex_data *) ll_get_first_node(postfix);
+
 	if (strncmp(curr->token_val, answer[i], strlen(answer[i])) != 0){
 	    printf("index = %d : expected the postfix string = '%s', but it was '%s'\n",
 		   i, answer[i], curr->token_val);

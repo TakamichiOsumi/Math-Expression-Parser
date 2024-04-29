@@ -289,12 +289,10 @@ stack_top_token_code(stack *s){
 static void
 print_postfix_list(linked_list *postfix){
     lex_data *curr;
-    node *n;
 
     printf("---- <Postfix> ----\n");
     ll_begin_iter(postfix);
-    while((n = ll_get_iter_node(postfix)) != NULL){
-	curr = (lex_data *) n->data;
+    while((curr = (lex_data *) ll_get_iter_node(postfix)) != NULL){
 	printf("%s ", curr->token_val);
     }
     ll_end_iter(postfix);
@@ -318,7 +316,7 @@ convert_infix_to_postfix(lex_data *infix, int size_in){
 	    continue;
 
 	if (is_operand(curr->token_code)){
-	    ll_tail_insert(postfix, (void *) curr);
+	    ll_tail_insert(postfix, curr);
 	}else if (curr->token_code == BRACKET_START){
 	    stack_push(s, curr);
 	}else if (is_operator(curr->token_code)){
@@ -338,7 +336,7 @@ convert_infix_to_postfix(lex_data *infix, int size_in){
 
 	    while(!stack_is_empty(s)){
 		if (is_unary_operator(stack_top_token_code(s))){
-		    ll_tail_insert(postfix, (void *) stack_pop(s));
+		    ll_tail_insert(postfix, stack_pop(s));
 		    continue;
 		}
 		break;
@@ -346,12 +344,12 @@ convert_infix_to_postfix(lex_data *infix, int size_in){
 	}else if (curr->token_code == COMMA){
 	    while(!stack_is_empty(s) &&
 		  stack_top_token_code(s) != BRACKET_START)
-		ll_tail_insert(postfix, (void *) stack_pop(s));
+		ll_tail_insert(postfix, stack_pop(s));
 	}
     }
 
     while(!stack_is_empty(s))
-	ll_tail_insert(postfix, (void *) stack_pop(s));
+	ll_tail_insert(postfix, stack_pop(s));
 
     print_postfix_list(postfix);
 

@@ -24,8 +24,7 @@ tr_node *evaluate_node(tr_node *self);
 /* free callback */
 static void
 free_dynamic_calculated_node(void *p){
-    node *lln = (node *) p;
-    tr_node *n = (tr_node *) lln->data;
+    tr_node *n = (tr_node *) p;
 
     switch(n->node_id){
 	case INT:
@@ -185,19 +184,17 @@ gen_tr_node_from_lex_data(lex_data *ld){
 tree*
 convert_postfix_to_tree(linked_list *postfix){
     stack *node_stack = stack_init(ll_get_length(postfix));
-    node *lln;
     lex_data *curr;
     tr_node *trn, *prev;
     tree *t = gen_tree();
 
     ll_begin_iter(postfix);
 
-    while((lln = ll_get_iter_node(postfix)) != NULL){
-	curr = (lex_data *) lln->data;
+    while((curr = (lex_data *) ll_get_iter_node(postfix)) != NULL){
 	trn = gen_tr_node_from_lex_data(curr);
 
 	if (is_operand(curr->token_code)){
-	    stack_push(node_stack, (void *) trn);
+	    stack_push(node_stack, trn);
 
 	    /* Construct the dll by leaf nodes */
 	    if (t->list_head == NULL){
@@ -216,13 +213,13 @@ convert_postfix_to_tree(linked_list *postfix){
 	}else if (is_unary_operator(curr->token_code)){
 
 	    trn->left = stack_pop(node_stack);
-	    stack_push(node_stack, (void *) trn);
+	    stack_push(node_stack, trn);
 
 	}else if (is_binary_operator(curr->token_code)){
 
 	    trn->right = stack_pop(node_stack);
 	    trn->left = stack_pop(node_stack);
-	    stack_push(node_stack, (void *) trn);
+	    stack_push(node_stack, trn);
 
 	}
     }

@@ -213,12 +213,15 @@ convert_postfix_to_tree(linked_list *postfix){
 	}else if (is_unary_operator(curr->token_code)){
 
 	    trn->left = stack_pop(node_stack);
+	    trn->left->parent = trn;
 	    stack_push(node_stack, trn);
 
 	}else if (is_binary_operator(curr->token_code)){
 
 	    trn->right = stack_pop(node_stack);
 	    trn->left = stack_pop(node_stack);
+	    trn->right->parent = trn;
+	    trn->left->parent = trn;
 	    stack_push(node_stack, trn);
 
 	}
@@ -227,14 +230,23 @@ convert_postfix_to_tree(linked_list *postfix){
     ll_end_iter(postfix);
 
     assert((t->root = stack_pop(node_stack)) != NULL);
+    assert(t->root->parent == NULL);
 
     stack_destroy(node_stack);
 
     return t;
 }
 
+/*
+ * Copy the calculation result (without pointers) to 'top'
+ * argument.
+ *
+ * API user can decide dynamic allocated memory or just local
+ * variable, etc for the computation result. All of calculated
+ * 'tr_node's get freed internally without user intervention.
+ */
 void
-evaluate_tree(tree *t){
+evaluate_tree(tree *t, tr_node *top){
     tr_node *result;
 
     if (t->require_resolution && !t->resolved){
@@ -245,23 +257,26 @@ evaluate_tree(tree *t){
     ll_tmp_calc = ll_init(NULL,
 			  free_dynamic_calculated_node);
 
+    top->parent = top->left = top->right = top->list_left
+	= top->list_right = NULL;
+
     result = evaluate_node(t->root);
     switch(result->node_id){
 	case INT:
-	    printf("=> %d\n",
-		   result->unv.ival);
+	    top->node_id = INT;
+	    top->unv.ival = result->unv.ival;
 	    break;
 	case DOUBLE:
-	    printf("=> %f\n",
-		   result->unv.dval);
+	    top->node_id = DOUBLE;
+	    top->unv.dval = result->unv.dval;
 	    break;
 	case VARIABLE:
-	    printf("=> %s\n",
-		   result->unv.vval.vname);
+	    printf("the return value of tree computation is invalid type\n");
+	    assert(0);
 	    break;
 	case BOOLEAN:
-	    printf("=> %s\n",
-		   result->unv.bval == true ? "true" : "false");
+	    top->node_id = BOOLEAN;
+	    top->unv.bval = result->unv.bval;
 	    break;
 	default:
 	    assert(0);

@@ -93,7 +93,7 @@ typedef struct tree {
     bool resolved;
 } tree;
 
-void evaluate_tree(tree *t);
+void evaluate_tree(tree *t, tr_node *top);
 tr_node *gen_null_tr_node(void);
 tree* convert_postfix_to_tree(linked_list *postfix);
 void resolve_variable(tree *t, void *app_data_src,

@@ -286,6 +286,7 @@ stack_top_token_code(stack *s){
     return top->token_code;
 }
 
+/*
 static void
 print_postfix_list(linked_list *postfix){
     lex_data *curr;
@@ -298,6 +299,7 @@ print_postfix_list(linked_list *postfix){
     ll_end_iter(postfix);
     printf("\n");
 }
+*/
 
 linked_list *
 convert_infix_to_postfix(lex_data *infix, int size_in){
@@ -351,7 +353,7 @@ convert_infix_to_postfix(lex_data *infix, int size_in){
     while(!stack_is_empty(s))
 	ll_tail_insert(postfix, stack_pop(s));
 
-    print_postfix_list(postfix);
+    /* print_postfix_list(postfix); */
 
     return postfix;
 }

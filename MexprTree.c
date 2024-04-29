@@ -104,7 +104,7 @@ gen_tr_node_from_lex_data(lex_data *ld){
 	case MINUS:
 	case MULTIPLY:
 	case DIVIDE:
-	case REMAINDER:
+	case MOD:
 	case MIN:
 	case MAX:
 	case POW:
@@ -729,7 +729,7 @@ evaluate_node(tr_node *self, tree *t){
 			break;
 		}
 		break;
-	    case REMAINDER:
+	    case MOD:
 		switch(left->node_id){
 		    case INT:
 			/* INT % ? */

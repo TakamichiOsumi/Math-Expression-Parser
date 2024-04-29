@@ -121,7 +121,7 @@ parser_stack_reset(void){
 
 "/"              { return DIVIDE;    }
 
-"%"              { return REMAINDER; }
+"%"              { return MOD;       }
 
 ","              { return COMMA;     }
 

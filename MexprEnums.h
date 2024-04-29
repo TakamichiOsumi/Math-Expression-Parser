@@ -31,7 +31,7 @@ enum operator {
     MINUS,
     MULTIPLY,
     DIVIDE,
-    REMAINDER,
+    MOD,
     MIN,
     MAX,
     POW,

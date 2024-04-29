@@ -12,7 +12,7 @@ operator_precedence(int token_code){
 	    return 7;
 	case MULTIPLY:
 	case DIVIDE:
-	case REMAINDER:
+	case MOD:
 	    return 6;
 	case PLUS:
 	case MINUS:
@@ -76,8 +76,8 @@ get_string_token(int token_code){
 	    return "MULTIPLY";
 	case DIVIDE:
 	    return "DIVIDE";
-	case REMAINDER:
-	    return "REMAINDER";
+	case MOD:
+	    return "MOD";
 	case MIN:
 	    return "MIN";
 	case MAX:
@@ -152,7 +152,7 @@ is_operator(int token_code){
 	case MINUS:
 	case MULTIPLY:
 	case DIVIDE:
-	case REMAINDER:
+	case MOD:
 	case MIN:
 	case MAX:
 	case POW:
@@ -197,7 +197,7 @@ is_binary_operator(int token_code){
 	case MINUS:
 	case MULTIPLY:
 	case DIVIDE:
-	case REMAINDER:
+	case MOD:
 	case MIN:
 	case MAX:
 	case POW:

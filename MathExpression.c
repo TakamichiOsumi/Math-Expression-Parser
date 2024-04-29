@@ -197,7 +197,7 @@ T_dash(void){
 
     /* T' -> % F T' */
     do {
-	if ((token_code = cyylex()) != REMAINDER)
+	if ((token_code = cyylex()) != MOD)
 	    break;
 
 	if (F() == false)

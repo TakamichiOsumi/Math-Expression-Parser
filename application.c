@@ -28,8 +28,8 @@ app_parser_test(bool (*parser)(void), char **targets, bool expected_result){
 }
 
 /*
- * Convert 'target' into postfix notation and
- * compare it with the 'answer'.
+ * Convert 'target' into postfix notation and compare
+ * it with the 'answer'.
  */
 static void
 app_converter_test(bool (*parser)(void), char *target,
@@ -377,10 +377,12 @@ app_var_resolve_tests(){
 				  "d\n", app_array, app_fetch_data, INT, expected_val);
     expected_val.bval = true;
     app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
-				  "a <= 100\n", app_array, app_fetch_data, BOOLEAN, expected_val);
+				  "a <= 100\n", app_array, app_fetch_data,
+				  BOOLEAN, expected_val);
     expected_val.bval = true;
     app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
-				  "b <= c\n", app_array, app_fetch_data, BOOLEAN, expected_val);
+				  "b <= c\n", app_array, app_fetch_data,
+				  BOOLEAN, expected_val);
 }
 
 int

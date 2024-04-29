@@ -74,6 +74,7 @@ typedef struct tr_node {
 } tr_node;
 
 typedef struct tree {
+
     /* Refer to the root node */
     struct tr_node *root;
 
@@ -91,6 +92,10 @@ typedef struct tree {
      * resolution looks invalid, then this won't be true.
      */
     bool resolved;
+
+    /* Did the tree hit the error during computation ? */
+    bool computation_failed;
+
 } tree;
 
 void evaluate_tree(tree *t, tr_node *top);

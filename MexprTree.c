@@ -19,7 +19,7 @@
  */
 static linked_list *ll_tmp_calc;
 
-tr_node *evaluate_node(tr_node *self);
+tr_node *evaluate_node(tr_node *self, tree *t);
 
 /* free callback */
 static void
@@ -244,6 +244,9 @@ convert_postfix_to_tree(linked_list *postfix){
  * API user can decide dynamic allocated memory or just local
  * variable, etc for the computation result. All of calculated
  * 'tr_node's get freed internally without user intervention.
+ *
+ * Caller needs to check the tree's 'computation_failed' flag
+ * before it accesses to the 'top' variable.
  */
 void
 evaluate_tree(tree *t, tr_node *top){
@@ -260,7 +263,12 @@ evaluate_tree(tree *t, tr_node *top){
     top->parent = top->left = top->right = top->list_left
 	= top->list_right = NULL;
 
-    result = evaluate_node(t->root);
+    result = evaluate_node(t->root, t);
+
+    /* Calculation failed. Just return */
+    if (t->computation_failed == true)
+	return;
+
     switch(result->node_id){
 	case INT:
 	    top->node_id = INT;
@@ -293,14 +301,20 @@ evaluate_tree(tree *t, tr_node *top){
 /*
  * There are needs to handle exit case, like zero division.
  *
- * As for the path to access the VARIABLE node, there are
+ * As for the paths to access the VARIABLE node, there are
  * assert() statements. This is because the recursive call
  * of evaluate_node() returns concrete value types such as
  * INT and DOUBLE.
+ *
+ * Set 'true' to the original tree's 'computation_failed'
+ * if calculation is not possible or failure.
  */
 tr_node *
-evaluate_node(tr_node *self){
+evaluate_node(tr_node *self, tree *t){
     tr_node *result, *left, *right;
+
+    assert(self != NULL);
+    assert(t != NULL);
 
     /* Reach the leaf node ? */
     if (self->left == NULL && self->right == NULL){
@@ -328,7 +342,7 @@ evaluate_node(tr_node *self){
 	ll_insert(ll_tmp_calc, (void *) result);
 
 	/* Get the result of left node */
-	left = evaluate_node(self->left);
+	left = evaluate_node(self->left, t);
 
 	switch(left->node_id){
 	    case INT:
@@ -392,8 +406,8 @@ evaluate_node(tr_node *self){
 	assert(self->right != NULL);
 
 	result = gen_null_tr_node();
-	left = evaluate_node(self->left);
-	right = evaluate_node(self->right);
+	left = evaluate_node(self->left, t);
+	right = evaluate_node(self->right, t);
 
 	assert(left != NULL);
 	assert(right != NULL);

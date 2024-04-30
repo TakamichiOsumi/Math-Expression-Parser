@@ -58,6 +58,42 @@ app_converter_test(bool (*parser)(void), char *target,
     }
 }
 
+void
+app_evaluate_failure_test(bool (*parser)(void), char *target,
+			  void *app_data_src, tr_node *(*app_access_cb)(char *, void *)){
+    tree *t;
+    linked_list *postfix;
+    bool parse_ret = false;
+    tr_node top;
+
+    /* Prepare the test */
+    init_buffer(target);
+
+    parse_ret = parser();
+    if (parse_ret != true){
+	printf("'%s' was not correctly parsed\n", target);
+	exit(-1);
+    }
+
+    /* Convert parse array into postfix notation */
+    postfix = convert_infix_to_postfix(lstack.main_data,
+				       lex_stack_pointer());
+
+    /* Convert the postfix notation into tree */
+    t = convert_postfix_to_tree(postfix);
+
+    /* Resolve variable if any */
+    resolve_variable(t, app_data_src, app_access_cb);
+
+    /* Evaluate the tree */
+    evaluate_tree(t, &top);
+
+    /* Did we hit an error ? */
+    if (!t->computation_failed){
+	printf("expected input parse to fail, but evaluation succeeded");
+    }
+}
+
 static void
 app_evaluation_test(bool (*parser)(void), char *target,
 		    int expected_type, node_value expected_value){
@@ -275,9 +311,11 @@ app_math_parser_tests(void){
     expected_val.dval = 2;
     app_evaluation_test(start_mathexpr_parse, "11.0 % 3\n", DOUBLE, expected_val);
 
-    /* miscellaneous */
+    /* more complex cases */
     expected_val.dval = 5.0;
     app_evaluation_test(start_mathexpr_parse, "min(1, 0) + sqrt(25)\n", DOUBLE, expected_val);
+    expected_val.ival = 70;
+    app_evaluation_test(start_mathexpr_parse, "6 + ((4 / 2) * (8 * 4))\n", INT, expected_val);
 }
 
 static void
@@ -329,6 +367,12 @@ app_ineq_parser_tests(void){
 				  "pow(3, 3) > 25\n", NULL, NULL,
 				  BOOLEAN, expected_val);
     app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
+				  "sqr(9) >= 80\n", NULL, NULL,
+				  BOOLEAN, expected_val);
+    app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
+				  "sqr(8) < sqr(9)\n", NULL, NULL,
+				  BOOLEAN, expected_val);
+    app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
 				  "1 != 0\n", NULL, NULL,
 				  BOOLEAN, expected_val);
     app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
@@ -368,18 +412,14 @@ app_logical_parser_tests(void){
 				  BOOLEAN, expected_val);
 }
 
+
+
 static void
 app_error_handle_tests(){
-    node_value expected_val;
-
-    expected_val.bval = false; /* Make compiler silent */
-
-    app_resolve_and_evaluate_test(start_mathexpr_parse,
-				  "1 / 0\n", NULL, NULL,
-				  BOOLEAN, expected_val);
-    app_resolve_and_evaluate_test(start_mathexpr_parse,
-				  "1 / 0.0\n", NULL, NULL,
-				  BOOLEAN, expected_val);
+    app_evaluate_failure_test(start_mathexpr_parse,
+			      "1 / 0\n", NULL, NULL);
+    app_evaluate_failure_test(start_mathexpr_parse,
+			      "1 / 0.0\n", NULL, NULL);
 }
 
 /* Application data definition */

@@ -309,7 +309,7 @@ evaluate_tree(tree *t, tr_node *top){
  * INT and DOUBLE.
  *
  * Set 'true' to the original tree's 'computation_failed'
- * if calculation is not possible or failure.
+ * if calculation is not possible or failed.
  */
 tr_node *
 evaluate_node(tr_node *self, tree *t){
@@ -1449,9 +1449,18 @@ evaluate_node(tr_node *self, tree *t){
 			/* INT != ? */
 			switch(right->node_id){
 			    case INT:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.ival != right->unv.ival;
+				break;
 			    case DOUBLE:
+				result->node_id = BOOLEAN;
+				result->unv.bval = (double) left->unv.ival != right->unv.dval;
+				break;
 			    case VARIABLE:
+				assert(0);
+				break;
 			    case BOOLEAN:
+				t->computation_failed = true;
 				break;
 			    default:
 				break;
@@ -1461,9 +1470,17 @@ evaluate_node(tr_node *self, tree *t){
 			/* DOUBLE != ? */
 			switch(right->node_id){
 			    case INT:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.dval != (double) right->unv.ival;
+				break;
 			    case DOUBLE:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.dval != right->unv.dval;
+				break;
 			    case VARIABLE:
+				assert(0);
 			    case BOOLEAN:
+				t->computation_failed = true;
 				break;
 			    default:
 				break;
@@ -1476,8 +1493,10 @@ evaluate_node(tr_node *self, tree *t){
 			    case DOUBLE:
 			    case VARIABLE:
 			    case BOOLEAN:
+				assert(0);
 				break;
 			    default:
+				assert(0);
 				break;
 			}
 			break;
@@ -1486,10 +1505,16 @@ evaluate_node(tr_node *self, tree *t){
 			switch(right->node_id){
 			    case INT:
 			    case DOUBLE:
+				t->computation_failed = true;
+				break;
 			    case VARIABLE:
+				assert(0);
+				break;
 			    case BOOLEAN:
+				t->computation_failed = true;
 				break;
 			    default:
+				assert(0);
 				break;
 			}
 			break;
@@ -1508,21 +1533,47 @@ evaluate_node(tr_node *self, tree *t){
 				result->unv.bval = left->unv.ival == right->unv.ival;
 				break;
 			    case DOUBLE:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.ival == (double) right->unv.dval;
 				break;
 			    case VARIABLE:
+				assert(0);
 				break;
 			    case BOOLEAN:
+				t->computation_failed = true;
+				break;
+			    default:
+				assert(0);
 				break;
 			}
 			break;
 		    case DOUBLE:
 			/* DOUBLE = ? */
+			switch(right->node_id){
+			    case INT:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.dval == (double) right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.dval == right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+			    case BOOLEAN:
+				break;
+			    default:
+				assert(0);
+				break;
+			}
 			break;
 		    case VARIABLE:
 			/* VARIABLE = ? */
+			assert(0);
 			break;
 		    case BOOLEAN:
 			/* BOOLEAN = ? */
+			t->computation_failed = true;
 			break;
 		    default:
 			assert(0);
@@ -1533,12 +1584,15 @@ evaluate_node(tr_node *self, tree *t){
 		switch(left->node_id){
 		    case INT:
 			/* INT or ? */
+			t->computation_failed = true;
 			break;
 		    case DOUBLE:
 			/* DOUBLE or ? */
+			t->computation_failed = true;
 			break;
 		    case VARIABLE:
 			/* VARIABLE or ? */
+			assert(0);
 			break;
 		    case BOOLEAN:
 			/* BOOLEAN or ? */
@@ -1546,6 +1600,7 @@ evaluate_node(tr_node *self, tree *t){
 			    case INT:
 			    case DOUBLE:
 			    case VARIABLE:
+				t->computation_failed = true;
 				break;
 			    case BOOLEAN:
 				result->node_id = BOOLEAN;
@@ -1565,25 +1620,29 @@ evaluate_node(tr_node *self, tree *t){
 		switch(left->node_id){
 		    case INT:
 			/* INT and ? */
+			t->computation_failed = true;
 			break;
 		    case DOUBLE:
 			/* DOUBLE and ? */
+			t->computation_failed = true;
 			break;
 		    case VARIABLE:
 			/* VARIABLE and ? */
+			assert(0);
 			break;
 		    case BOOLEAN:
 			/* BOOLEAN and ? */
 			switch(right->node_id){
 			    case INT:
 			    case DOUBLE:
+				t->computation_failed = true;
+				break;
 			    case VARIABLE:
-				/* Evaluation failure. Report an error */
+				assert(0);
 				break;
 			    case BOOLEAN:
 				result->node_id = BOOLEAN;
-				result->unv.bval = left->unv.bval &&
-				    right->unv.bval;
+				result->unv.bval = left->unv.bval && right->unv.bval;
 				break;
 			}
 			break;

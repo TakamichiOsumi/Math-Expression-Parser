@@ -34,7 +34,9 @@
  *
  * With regard to the rule which contains dollar sign, the function for
  * the non-terminal symbol must never return error. It should always
- * return success. The way to implement dollar sign is simply return success.
+ * return success. The way to implement dollar sign is to rewind the
+ * parse stack and parse position and then return success after all
+ * other grammer rules.
  */
 bool E(void);
 static bool E_dash(void);

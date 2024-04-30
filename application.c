@@ -128,10 +128,16 @@ app_resolve_and_evaluate_test(bool (*parser)(void), char *target,
     /* Evaluate the tree */
     evaluate_tree(t, &top);
 
+    /* Did we hit an error ? */
+    if (t->computation_failed){
+	printf("target = '%s' was not evaluated\n", target);
+	return;
+    }
+
     /* Compare the result with expected value */
     if (top.node_id != expected_type){
 	printf("target = '%s' didn't return the expected type of value\n", target);
-	assert(0);
+	exit(-1);
     }
 
     switch(top.node_id){
@@ -276,6 +282,7 @@ app_math_parser_tests(void){
 
 static void
 app_ineq_parser_tests(void){
+    node_value expected_val;
     char *ineq_success[] = {
 	"1 < 2\n",
 	"1 > 2\n",
@@ -286,7 +293,6 @@ app_ineq_parser_tests(void){
 	"( 5 ) >= ( 10 )\n",
 	NULL,
     };
-
     char *ineq_failure[] = {
 	">\n"
 	">=\n",
@@ -305,30 +311,74 @@ app_ineq_parser_tests(void){
 
     app_parser_test(start_ineq_mathexpr_parse, ineq_success, true);
     app_parser_test(start_ineq_mathexpr_parse, ineq_failure, false);
+
+    expected_val.bval = true;
+    app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
+				  "1 <= 2\n", NULL, NULL,
+				  BOOLEAN, expected_val);
+    app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
+				  "3.0 <= 5.0\n", NULL, NULL,
+				  BOOLEAN, expected_val);
+    app_resolve_and_evaluate_test(start_logical_mathexpr_parse,
+				  "1 <= 2 and 3.0 <= 5.0\n", NULL, NULL,
+				  BOOLEAN, expected_val);
+    app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
+				  "2 = 2\n", NULL, NULL,
+				  BOOLEAN, expected_val);
+    app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
+				  "pow(3, 3) > 25\n", NULL, NULL,
+				  BOOLEAN, expected_val);
+    app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
+				  "1 != 0\n", NULL, NULL,
+				  BOOLEAN, expected_val);
+    app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
+				  "1 = 1\n", NULL, NULL,
+				  BOOLEAN, expected_val);
 }
 
 static void
 app_logical_parser_tests(void){
     node_value expected_val;
-    char *logical_success[] = {
-	"1 <= 2\n",
-	"3.0 <= 5.0\n",
-	"1 <= 2 and 3.0 <= 5.0\n",
-	"2 = 2\n",
-    };
 
     expected_val.bval = true;
-    app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
-				  logical_success[0], NULL, NULL,
-				  BOOLEAN, expected_val);
-    app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
-				  logical_success[1], NULL, NULL,
+    app_resolve_and_evaluate_test(start_logical_mathexpr_parse,
+				  "1 <= 2 and 2 <= 3\n", /* true and true */
+				  NULL, NULL,
 				  BOOLEAN, expected_val);
     app_resolve_and_evaluate_test(start_logical_mathexpr_parse,
-				  logical_success[2], NULL, NULL,
+				  "1 <= 2 or 2 <= 3\n", /* true or true */
+				  NULL, NULL,
 				  BOOLEAN, expected_val);
-    app_resolve_and_evaluate_test(start_ineq_mathexpr_parse,
-				  logical_success[3], NULL, NULL,
+    app_resolve_and_evaluate_test(start_logical_mathexpr_parse,
+				  "1 <= 2 or 1 > 2\n", NULL, NULL, /* true or false */
+				  BOOLEAN, expected_val);
+
+    expected_val.bval = false;
+    app_resolve_and_evaluate_test(start_logical_mathexpr_parse,
+				  "1 = 2 or 1 > 2\n", /* false or false */
+				  NULL, NULL,
+				  BOOLEAN, expected_val);
+    app_resolve_and_evaluate_test(start_logical_mathexpr_parse,
+				  "1 = 2 and 1 > 2\n", /* false and false */
+				  NULL, NULL,
+				  BOOLEAN, expected_val);
+    app_resolve_and_evaluate_test(start_logical_mathexpr_parse,
+				  "1 = 2 and 1 > 2\n", /* false and true */
+				  NULL, NULL,
+				  BOOLEAN, expected_val);
+}
+
+static void
+app_error_handle_tests(){
+    node_value expected_val;
+
+    expected_val.bval = false; /* Make compiler silent */
+
+    app_resolve_and_evaluate_test(start_mathexpr_parse,
+				  "1 / 0\n", NULL, NULL,
+				  BOOLEAN, expected_val);
+    app_resolve_and_evaluate_test(start_mathexpr_parse,
+				  "1 / 0.0\n", NULL, NULL,
 				  BOOLEAN, expected_val);
 }
 
@@ -413,10 +463,12 @@ main(int argc, char **argv){
     app_math_parser_tests();
     /* Inequality expression */
     app_ineq_parser_tests();
-    /* Logical expression (Partly supported) */
+    /* Logical expression */
     app_logical_parser_tests();
     /* Variable resolution */
     app_var_resolve_tests();
+    /* Error handling */
+    app_error_handle_tests();
 
     return 0;
 }

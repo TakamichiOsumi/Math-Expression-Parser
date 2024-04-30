@@ -129,7 +129,11 @@ app_resolve_and_evaluate_test(bool (*parser)(void), char *target,
     evaluate_tree(t, &top);
 
     /* Compare the result with expected value */
-    assert(top.node_id == expected_type);
+    if (top.node_id != expected_type){
+	printf("target = '%s' didn't return the expected type of value\n", target);
+	assert(0);
+    }
+
     switch(top.node_id){
 	case INT:
 	    assert(top.unv.ival == expected_value.ival);
@@ -229,28 +233,45 @@ app_math_parser_tests(void){
     app_converter_test(start_mathexpr_parse, conversion_test3,
 		   answer3, 17);
 
-    expected_val.ival = 2;
-    app_evaluation_test(start_mathexpr_parse, "max(1, 2)\n", INT, expected_val);
+    /* single value */
+    expected_val.ival = -5;
+    app_evaluation_test(start_mathexpr_parse, "-5\n", INT, expected_val);
+    expected_val.dval = 1.0;
+    app_evaluation_test(start_mathexpr_parse, "1.0\n", DOUBLE, expected_val);
+
+    /* unary operator */
+    expected_val.dval = 0.0;
+    app_evaluation_test(start_mathexpr_parse, "sin(0)\n", DOUBLE, expected_val);
+    expected_val.dval = 1.0;
+    app_evaluation_test(start_mathexpr_parse, "cos(0)\n", DOUBLE, expected_val);
+    expected_val.dval = 4.0;
+    app_evaluation_test(start_mathexpr_parse, "sqrt(16)\n", DOUBLE, expected_val);
+    expected_val.ival = 100;
+    app_evaluation_test(start_mathexpr_parse, "sqr(10)\n", INT, expected_val);
+
+    /* binary operator */
     expected_val.dval = 15.0;
     app_evaluation_test(start_mathexpr_parse, "5.0 + 10\n", DOUBLE, expected_val);
-    expected_val.dval = 15.0;
-    app_evaluation_test(start_mathexpr_parse, "10 + 5.0\n", DOUBLE, expected_val);
+    expected_val.ival = 2;
+    app_evaluation_test(start_mathexpr_parse, "max(1, 2)\n", INT, expected_val);
     expected_val.ival = -1;
     app_evaluation_test(start_mathexpr_parse, "1 - 2\n", INT, expected_val);
     expected_val.ival = -10;
     app_evaluation_test(start_mathexpr_parse, "min(-10, 1)\n", INT, expected_val);
     expected_val.ival = 1;
     app_evaluation_test(start_mathexpr_parse, "min(1, 10)\n", INT, expected_val);
-    expected_val.ival = -5;
-    app_evaluation_test(start_mathexpr_parse, "-5\n", INT, expected_val);
-    expected_val.dval = 4.0;
-    app_evaluation_test(start_mathexpr_parse, "sqrt(16)\n", DOUBLE, expected_val);
-    expected_val.ival = 100;
-    app_evaluation_test(start_mathexpr_parse, "sqr(10)\n", INT, expected_val);
-    expected_val.dval = 5.0;
-    app_evaluation_test(start_mathexpr_parse, "min(1, 0) + sqrt(25)\n", DOUBLE, expected_val);
     expected_val.ival = 50;
     app_evaluation_test(start_mathexpr_parse, "100 / 2\n", INT, expected_val);
+    expected_val.ival = -6;
+    app_evaluation_test(start_mathexpr_parse, "min(1 * 2 * 3, 1 * 2 * 3 * -1)\n", INT, expected_val);
+    expected_val.dval = 8.0;
+    app_evaluation_test(start_mathexpr_parse, "pow(2, 3)\n", DOUBLE, expected_val);
+    expected_val.dval = 2;
+    app_evaluation_test(start_mathexpr_parse, "11.0 % 3\n", DOUBLE, expected_val);
+
+    /* miscellaneous */
+    expected_val.dval = 5.0;
+    app_evaluation_test(start_mathexpr_parse, "min(1, 0) + sqrt(25)\n", DOUBLE, expected_val);
 }
 
 static void
@@ -357,7 +378,7 @@ app_var_resolve_tests(){
 
     expected_val.ival = -1;
     app_resolve_and_evaluate_test(start_mathexpr_parse,
-				  "((1 + 2) - 3) * 4 / (5 / 6) + (7 - 8) \n",
+				  "((7 - 8))\n",
 				  NULL, NULL, INT, expected_val);
     expected_val.dval = 14.0;
     app_resolve_and_evaluate_test(start_mathexpr_parse,

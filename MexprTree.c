@@ -266,8 +266,10 @@ evaluate_tree(tree *t, tr_node *top){
     result = evaluate_node(t->root, t);
 
     /* Calculation failed. Just return */
-    if (t->computation_failed == true)
+    if (t->computation_failed == true){
+	printf("calculation failure\n");
 	return;
+    }
 
     switch(result->node_id){
 	case INT:
@@ -344,6 +346,11 @@ evaluate_node(tr_node *self, tree *t){
 	/* Get the result of left node */
 	left = evaluate_node(self->left, t);
 
+	if (t->computation_failed)
+	    return result;
+
+	assert(left != NULL);
+
 	switch(left->node_id){
 	    case INT:
 		switch(self->node_id){
@@ -396,6 +403,7 @@ evaluate_node(tr_node *self, tree *t){
 		break;
 	    case BOOLEAN:
 		/* Evaluation failure. Report an error */
+		t->computation_failed = true;
 		break;
 	    default:
 		assert(0);
@@ -407,7 +415,12 @@ evaluate_node(tr_node *self, tree *t){
 
 	result = gen_null_tr_node();
 	left = evaluate_node(self->left, t);
+	if (t->computation_failed)
+	    return result;
+
 	right = evaluate_node(self->right, t);
+	if (t->computation_failed)
+	    return result;
 
 	assert(left != NULL);
 	assert(right != NULL);
@@ -430,7 +443,8 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -442,7 +456,7 @@ evaluate_node(tr_node *self, tree *t){
 			switch(right->node_id){
 			    case INT:
 				result->node_id = DOUBLE;
-				result->unv.dval = left->unv.dval + right->unv.ival;
+				result->unv.dval = left->unv.dval + (double) right->unv.ival;
 				break;
 			    case DOUBLE:
 				result->node_id = DOUBLE;
@@ -452,7 +466,8 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -463,8 +478,8 @@ evaluate_node(tr_node *self, tree *t){
 			/*
 			 * VARIABLE + ?
 			 *
-			 * VARIABLE should be resolved and converted
-			 * into different type here.
+			 * VARIABLE should be resolved already and
+			 * converted into different type here.
 			 */
 			switch(right->node_id){
 			    case INT:
@@ -484,8 +499,9 @@ evaluate_node(tr_node *self, tree *t){
 			    case INT:
 			    case DOUBLE:
 			    case VARIABLE:
-				break;
 			    case BOOLEAN:
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -513,7 +529,8 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -535,7 +552,8 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -563,7 +581,8 @@ evaluate_node(tr_node *self, tree *t){
 			    case DOUBLE:
 			    case VARIABLE:
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				break;
@@ -590,7 +609,8 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -612,7 +632,8 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -640,7 +661,8 @@ evaluate_node(tr_node *self, tree *t){
 			    case DOUBLE:
 			    case VARIABLE:
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -657,18 +679,29 @@ evaluate_node(tr_node *self, tree *t){
 			/* INT / ? */
 			switch(right->node_id){
 			    case INT:
-				result->node_id = INT;
-				result->unv.ival = left->unv.ival / right->unv.ival;
-				break;
+				if (right->unv.ival != 0){
+				    result->node_id = INT;
+				    result->unv.ival = left->unv.ival / right->unv.ival;
+				    break;
+				}else{
+				    t->computation_failed = true;
+				    break;
+				}
 			    case DOUBLE:
-				result->node_id = DOUBLE;
-				result->unv.dval = left->unv.ival / right->unv.dval;
-				break;
+				if (right->unv.dval != 0){
+				    result->node_id = DOUBLE;
+				    result->unv.dval = left->unv.ival / right->unv.dval;
+				    break;
+				}else{
+				    t->computation_failed = true;
+				    break;
+				}
 			    case VARIABLE:
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -679,18 +712,29 @@ evaluate_node(tr_node *self, tree *t){
 			/* DOUBLE / ? */
 			switch(right->node_id){
 			    case INT:
-				result->node_id = DOUBLE;
-				result->unv.dval = left->unv.dval / right->unv.ival;
-				break;
+				if (right->unv.ival != 0){
+				    result->node_id = DOUBLE;
+				    result->unv.dval = left->unv.dval / right->unv.ival;
+				    break;
+				}else{
+				    t->computation_failed = true;
+				    break;
+				}
 			    case DOUBLE:
-				result->node_id = DOUBLE;
-				result->unv.dval = left->unv.dval / right->unv.dval;
-				break;
+				if (right->unv.dval != 0.0){
+				    result->node_id = DOUBLE;
+				    result->unv.dval = left->unv.dval / right->unv.dval;
+				    break;
+				}else{
+				    t->computation_failed = true;
+				    break;
+				}
 			    case VARIABLE:
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -717,7 +761,8 @@ evaluate_node(tr_node *self, tree *t){
 			    case DOUBLE:
 			    case VARIABLE:
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -735,17 +780,31 @@ evaluate_node(tr_node *self, tree *t){
 			/* INT % ? */
 			switch(right->node_id){
 			    case INT:
-				result->node_id = INT;
-				result->unv.ival = left->unv.ival % right->unv.ival;
+				if (right->unv.ival != 0){
+				    result->node_id = INT;
+				    result->unv.ival = left->unv.ival % right->unv.ival;
+				    break;
+				}else{
+				    t->computation_failed = true;
+				    break;
+				}
 				break;
 			    case DOUBLE:
-				/* Evaluation failure. Report an error */
-				break;
+				if (right->unv.dval != 0){
+				    result->node_id = DOUBLE;
+				    result->unv.dval = fmod(left->unv.ival,
+							    right->unv.dval);
+				    break;
+				}else{
+				    t->computation_failed = true;
+				    break;
+				}
 			    case VARIABLE:
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -756,16 +815,30 @@ evaluate_node(tr_node *self, tree *t){
 			/* DOUBLE % ? */
 			switch(right->node_id){
 			    case INT:
-				/* Evaluation failure. Report an error */
-				break;
+				if (right->unv.ival != 0){
+				    result->node_id = DOUBLE;
+				    result->unv.dval = fmod(left->unv.dval,
+							    right->unv.ival);
+				    break;
+				}else{
+				    t->computation_failed = true;
+				    break;
+				}
 			    case DOUBLE:
-				/* Evaluation failure. Report an error */
-				break;
+				if (right->unv.dval != 0){
+				    result->node_id = DOUBLE;
+				    result->unv.dval = fmod(left->unv.dval,
+							    right->unv.dval);
+				    break;
+				}else{
+				    t->computation_failed = true;
+				    break;
+				}
 			    case VARIABLE:
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -793,7 +866,8 @@ evaluate_node(tr_node *self, tree *t){
 			    case DOUBLE:
 			    case VARIABLE:
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -827,7 +901,8 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -855,7 +930,8 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -883,7 +959,8 @@ evaluate_node(tr_node *self, tree *t){
 			    case DOUBLE:
 			    case VARIABLE:
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -917,7 +994,8 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -945,7 +1023,8 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -973,7 +1052,8 @@ evaluate_node(tr_node *self, tree *t){
 			    case DOUBLE:
 			    case VARIABLE:
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -984,13 +1064,53 @@ evaluate_node(tr_node *self, tree *t){
 			break;
 		}
 		break;
-	    case POW: /* Not yet implemented */
+	    case POW:
 		switch(left->node_id){
 		    case INT:
 			/* POW (INT, ?) */
+			switch(right->node_id){
+			    case INT:
+				result->node_id = DOUBLE;
+				result->unv.dval = pow(left->unv.ival,
+						       right->unv.ival);
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = pow(left->unv.ival,
+						       right->unv.dval);
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    case BOOLEAN:
+				t->computation_failed = true;
+				break;
+			    default:
+				assert(0);
+			}
 			break;
 		    case DOUBLE:
 			/* POW (DOUBLE, ?) */
+			switch(right->node_id){
+			    case INT:
+				result->node_id = DOUBLE;
+				result->unv.dval = pow(left->unv.dval,
+						       right->unv.ival);
+				break;
+			    case DOUBLE:
+				result->node_id = DOUBLE;
+				result->unv.dval = pow(left->unv.dval,
+						       right->unv.dval);
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    case BOOLEAN:
+				t->computation_failed = true;
+				break;
+			    default:
+				assert(0);
+			}
 			break;
 		    case VARIABLE:
 			/* POW (VARIABLE, ?) */
@@ -1008,6 +1128,20 @@ evaluate_node(tr_node *self, tree *t){
 			break;
 		    case BOOLEAN:
 			/* POW (BOOLEAN, ?) */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+				t->computation_failed = true;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    case BOOLEAN:
+				t->computation_failed = true;
+				break;
+			    default:
+				assert(0);
+			}
 			break;
 		    default:
 			assert(0);
@@ -1031,7 +1165,8 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -1053,7 +1188,7 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -1079,7 +1214,7 @@ evaluate_node(tr_node *self, tree *t){
 			    case DOUBLE:
 			    case VARIABLE:
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -1108,7 +1243,8 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -1130,7 +1266,8 @@ evaluate_node(tr_node *self, tree *t){
 				assert(0);
 				break;
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -1160,7 +1297,8 @@ evaluate_node(tr_node *self, tree *t){
 			    case DOUBLE:
 			    case VARIABLE:
 			    case BOOLEAN:
-				/* Evaluation failure. Report an error */
+				/* Evaluation failure */
+				t->computation_failed = true;
 				break;
 			    default:
 				assert(0);
@@ -1176,15 +1314,72 @@ evaluate_node(tr_node *self, tree *t){
 		switch(left->node_id){
 		    case INT:
 			/* INT > ? */
+			switch(right->node_id){
+			    case INT:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.ival > right->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = BOOLEAN;
+				result->unv.bval = left->unv.ival > right->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    case BOOLEAN:
+				t->computation_failed = true;
+				break;
+			    default:
+				break;
+			}
 			break;
 		    case DOUBLE:
 			/* DOUBLE > ? */
+			switch(right->node_id){
+			    case INT:
+				result->node_id = BOOLEAN;
+				result->unv.bval = right->unv.dval > (double) left->unv.ival;
+				break;
+			    case DOUBLE:
+				result->node_id = BOOLEAN;
+				result->unv.bval = right->unv.dval > left->unv.dval;
+				break;
+			    case VARIABLE:
+				assert(0);
+				break;
+			    case BOOLEAN:
+				t->computation_failed = true;
+				break;
+			    default:
+				break;
+			}
 			break;
 		    case VARIABLE:
 			/* VARIABLE > ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				assert(0);
+				break;
+			    default:
+				assert(0);
+				break;
+			}
 			break;
 		    case BOOLEAN:
 			/* BOOLEAN > ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				t->computation_failed = true;
+				break;
+			    default:
+				break;
+			}
 			break;
 		    default:
 			assert(0);
@@ -1195,15 +1390,53 @@ evaluate_node(tr_node *self, tree *t){
 		switch(left->node_id){
 		    case INT:
 			/* INT < ? */
+			switch(right->node_id){
+			    case INT:
+				break;
+			    case DOUBLE:
+				break;
+			    case VARIABLE:
+			    case BOOLEAN:
+				break;
+			    default:
+				break;
+			}
 			break;
 		    case DOUBLE:
 			/* DOUBLE < ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				break;
+			    default:
+				break;
+			}
 			break;
 		    case VARIABLE:
 			/* VARIABLE < ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				break;
+			    default:
+				break;
+			}
 			break;
 		    case BOOLEAN:
 			/* BOOLEAN < ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				break;
+			    default:
+				break;
+			}
 			break;
 		    default:
 			assert(0);
@@ -1214,15 +1447,51 @@ evaluate_node(tr_node *self, tree *t){
 		switch(left->node_id){
 		    case INT:
 			/* INT != ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				break;
+			    default:
+				break;
+			}
 			break;
 		    case DOUBLE:
 			/* DOUBLE != ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				break;
+			    default:
+				break;
+			}
 			break;
 		    case VARIABLE:
 			/* VARIABLE != ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				break;
+			    default:
+				break;
+			}
 			break;
 		    case BOOLEAN:
 			/* BOOLEAN != ? */
+			switch(right->node_id){
+			    case INT:
+			    case DOUBLE:
+			    case VARIABLE:
+			    case BOOLEAN:
+				break;
+			    default:
+				break;
+			}
 			break;
 		    default:
 			assert(0);
@@ -1232,6 +1501,7 @@ evaluate_node(tr_node *self, tree *t){
 	    case EQ:
 		switch(left->node_id){
 		    case INT:
+			/* INT = ? */
 			switch(right->node_id){
 			    case INT:
 				result->node_id = BOOLEAN;
@@ -1244,7 +1514,6 @@ evaluate_node(tr_node *self, tree *t){
 			    case BOOLEAN:
 				break;
 			}
-			/* INT = ? */
 			break;
 		    case DOUBLE:
 			/* DOUBLE = ? */

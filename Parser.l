@@ -87,10 +87,6 @@ parser_stack_reset(void){
 
 \n               { return PARSER_EOF; }
 
-"TRUE"           { return BOOLEAN;  }
-
-"FALSE"          { return BOOLEAN;  }
-
 "or"             { return OR;    }
 
 "and"            { return AND;   }

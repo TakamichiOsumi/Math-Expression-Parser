@@ -36,8 +36,8 @@ $(TEST_APP): $(OUTPUT_LIB)
 .phony: clean test
 
 clean:
-	rm -rf *.o lex.yy.c $(OUTPUT_LIB) $(TEST_APP) $(TEST_APP).dSYM
-	for dir in $(SUBDIRS); do cd $$dir; make clean; cd ..; done
+	@rm -rf *.o lex.yy.c $(OUTPUT_LIB) $(TEST_APP) $(TEST_APP).dSYM
+	@for dir in $(SUBDIRS); do cd $$dir; make clean; cd ..; done
 
 test: lex.yy.o $(TEST_APP)
 	@./$(TEST_APP) &> /dev/null && echo "Success when the return value is zero >>> $$?"

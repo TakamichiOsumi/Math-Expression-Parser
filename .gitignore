@@ -1,6 +1,9 @@
 # Dev
 G*
 
+# Lex output
+lex.yy.c
+
 # Executables
 exe*
 

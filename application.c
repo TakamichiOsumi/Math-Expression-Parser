@@ -412,16 +412,6 @@ app_logical_parser_tests(void){
 				  BOOLEAN, expected_val);
 }
 
-
-
-static void
-app_error_handle_tests(){
-    app_evaluate_failure_test(start_mathexpr_parse,
-			      "1 / 0\n", NULL, NULL);
-    app_evaluate_failure_test(start_mathexpr_parse,
-			      "1 / 0.0\n", NULL, NULL);
-}
-
 /* Application data definition */
 typedef struct app_data {
     char *name;
@@ -430,10 +420,11 @@ typedef struct app_data {
 
 /* Application data source */
 app_data app_array[] = {
-    { .name = "a", .val = "1" },
+    { .name = "a", .val = "1"   },
     { .name = "b", .val = "3.0" },
-    { .name = "c", .val = "5" },
-    { .name = "d", .val = "-1" },
+    { .name = "c", .val = "5"   },
+    { .name = "d", .val = "-1"  },
+    { .name = "e", .val = "0.0" },
 };
 
 /* Application callback */
@@ -454,6 +445,9 @@ app_fetch_data(char *s, void *data){
     }else if (strncmp(s, "d", strlen("d")) == 0){
 	trn->node_id = INT;
 	trn->unv.ival = strtol(ary[3].val, (char **) NULL, 10);
+    }else if (strncmp(s, "e", strlen("e")) == 0){
+	trn->node_id = DOUBLE;
+	trn->unv.dval = strtod(ary[4].val, (char **) NULL);
     }else{
 	/* Application should not pass any other name of data */
 	assert(0);
@@ -496,6 +490,18 @@ app_var_resolve_tests(){
 				  BOOLEAN, expected_val);
 }
 
+static void
+app_error_handle_tests(){
+    printf("Will evaluate some invalid math expressions...\n");
+
+    app_evaluate_failure_test(start_mathexpr_parse,
+			      "1 / 0\n", NULL, NULL);
+    app_evaluate_failure_test(start_mathexpr_parse,
+			      "1 / 0.0\n", NULL, NULL);
+    app_evaluate_failure_test(start_mathexpr_parse,
+			      "1 / e\n", app_array, app_fetch_data);
+}
+
 int
 main(int argc, char **argv){
 
@@ -509,6 +515,8 @@ main(int argc, char **argv){
     app_var_resolve_tests();
     /* Error handling */
     app_error_handle_tests();
+
+    printf("All tests are done gracefully.\n");
 
     return 0;
 }

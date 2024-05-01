@@ -90,7 +90,8 @@ app_evaluate_failure_test(bool (*parser)(void), char *target,
 
     /* Did we hit an error ? */
     if (!t->computation_failed){
-	printf("expected input parse to fail, but evaluation succeeded");
+	printf("expected input parse to fail, but evaluation succeeded\n");
+	exit(-1);
     }
 }
 

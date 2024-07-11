@@ -55,12 +55,12 @@ enum operator {
     AND,
 };
 
-enum data_type {
+typedef enum data_type {
     INT = AND + 1,
     DOUBLE,
     VARIABLE,
     BOOLEAN,
-};
+} data_type;
 
 char *get_string_token(int token_code);
 int operator_precedence(int token_code);

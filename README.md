@@ -12,7 +12,7 @@ Parse math expressions that contain application-defined variables.
 | start_logical_mathexpr_parse | Parse math expression that contains logical operators |
 | start_mathexpr_parse | Parse arithmetic expression |
 
-All of those functions return true if those parse processings are successful. Otherwise, return false. Users who want to parse a string that may match any of them should call `start_mathexpr_parse`, `start_ineq_mathexpr_parse` and `start_mathexpr_parse` in order. When one of the consecutive functions calls returns true, the input string is the corresponding math expression.
+All of those functions return true if those parse processings are successful. Otherwise, return false. Users who want to parse string that may match any of them should call `start_mathexpr_parse`, `start_ineq_mathexpr_parse` and `start_logical_mathexpr_parse` in order. When one of the consecutive function calls returns true, it menas the parsed string is categorized into the corresponding math expression.
 
 ## How to build and test
 
